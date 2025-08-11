@@ -9,7 +9,7 @@ export default function Footer() {
           {/* Company Info */}
           <div>
             <img 
-              src="/assets/Lab-logo.png" 
+              src="/assets/benchtop_logo_big.png" 
               alt="Labstica"
               className="h-12 mb-6"
             />
@@ -17,9 +17,7 @@ export default function Footer() {
               There are many variations of passages by injected humour randomised
             </p>
             <div className="flex space-x-4">
-              <Link href="#" className="text-gray-400 hover:text-white transition-colors duration-300">
-                <Github className="w-5 h-5" />
-              </Link>
+              
               <Link href="#" className="text-gray-400 hover:text-white transition-colors duration-300">
                 <Facebook className="w-5 h-5" />
               </Link>

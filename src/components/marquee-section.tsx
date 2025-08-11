@@ -1,12 +1,14 @@
 export default function MarqueeSection() {
   const items = [
-    "Innovative R&D Solutions",
-    "Microbiological Testing", 
-    "Environmental Testing",
+    "Biomedical Research",
+    "Industrial Process", 
+    "Environmental Research",
     "Pharmaceutical Research",
-    "Biotechnology Innovations",
-    "Water & Air Quality Testing"
-  ]
+    "Food & Beverages",
+    "Diagnostics and Healthcare",
+    "Schools and Universities",
+    "Life Science Research",
+  ];
 
   return (
     <section className="bg-blue-600 py-4 overflow-hidden">
@@ -19,5 +21,5 @@ export default function MarqueeSection() {
         ))}
       </div>
     </section>
-  )
+  );
 }

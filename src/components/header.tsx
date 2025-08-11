@@ -10,7 +10,7 @@ export default function Header() {
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50  ">
       {/* Top Header */}
-      <div className="bg-blue-600 text-white py-2">
+      <div className="bg-blue-400 text-white py-2">
         <div className="container mx-auto px-4 flex justify-between items-center text-sm">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
@@ -21,9 +21,17 @@ export default function Header() {
               <span>📍</span>
               <span>128 Near Golden Mall London Eye</span>
             </div>
+            <div className="flex items-center space-x-2">
+              <span>📞</span>
+              <span>+91 9956499800</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span>📞</span>
+              <span>+91 9807850733</span>
+            </div>
           </div>
           <div className="flex items-center space-x-4">
-            <Link href="#" className="hover:text-blue-200">GitHub</Link>
+            
             <Link href="#" className="hover:text-blue-200">Facebook</Link>
             <Link href="#" className="hover:text-blue-200">Instagram</Link>
             <Link href="#" className="hover:text-blue-200">Pinterest</Link>
@@ -35,7 +43,7 @@ export default function Header() {
       <div className="container mx-auto px-4 py-4 ">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center">
-            <img src="/assets/logo.png" alt="Labstica" className="h-12" />
+            <img src="/assets/benchtop_logo_big.png" alt="Labstica" className="h-12" />
           </Link>
 
           {/* Desktop Navigation */}
@@ -44,32 +52,25 @@ export default function Header() {
               <Link href="/" className="text-gray-700 hover:text-blue-600 font-medium">Home</Link>
             </div>
             <div className="relative group">
-              <Link href="/pages" className="text-gray-700 hover:text-blue-600 font-medium">Pages</Link>
+              <Link href="/about-us" className="text-gray-700 hover:text-blue-600 font-medium">About Us</Link>
             </div>
             <div className="relative group">
-              <Link href="/services" className="text-gray-700 hover:text-blue-600 font-medium">Services</Link>
+              <Link href="/services" className="text-gray-700 hover:text-blue-600 font-medium">Products</Link>
             </div>
             <div className="relative group">
-              <Link href="/portfolio" className="text-gray-700 hover:text-blue-600 font-medium">Portfolio</Link>
+              <Link href="/certificates" className="text-gray-700 hover:text-blue-600 font-medium">Certificates</Link>
             </div>
-            <div className="relative group">
-              <Link href="/blog" className="text-gray-700 hover:text-blue-600 font-medium">Blog</Link>
-            </div>
-            <Link href="/contact" className="text-gray-700 hover:text-blue-600 font-medium">Contact Us</Link>
+            {/* <div className="relative group">
+              <Link href="/blog" className="text-gray-700 hover:text-blue-600 font-medium">Blog</Link> */}
+            {/* </div> */}
+            <Link href="/contact-us" className="text-gray-700 hover:text-blue-600 font-medium">Contact Us</Link>
           </nav>
 
           {/* Header Actions */}
           <div className="flex items-center space-x-4">
-            <div className="hidden md:flex items-center space-x-2 text-blue-600">
-              <Phone className="w-5 h-5" />
-              <span className="font-semibold">+1800-001-658</span>
-            </div>
-            <button className="p-2 hover:bg-gray-100 rounded-full">
-              <Search className="w-5 h-5" />
-            </button>
-            <button className="p-2 hover:bg-gray-100 rounded-full relative">
-              <ShoppingBag className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+           
+            <button className="p-2 bg-blue-400 text-white rounded-sm relative">
+                 <Link href={"https://drive.google.com/file/d/17nWNeeKxxNTpVyfOVSzCpLOFtG4C12V2/view?pli=1"}>Catalogue</Link>
             </button>
             <button 
               className="lg:hidden p-2 hover:bg-gray-100 rounded-full"
@@ -85,11 +86,10 @@ export default function Header() {
           <div className="lg:hidden mt-4 pb-4 border-t">
             <nav className="flex flex-col space-y-4 pt-4">
               <Link href="/" className="text-gray-700 hover:text-blue-600 font-medium">Home</Link>
-              <Link href="/pages" className="text-gray-700 hover:text-blue-600 font-medium">Pages</Link>
+              <Link href="/about-us" className="text-gray-700 hover:text-blue-600 font-medium">About Us</Link>
               <Link href="/services" className="text-gray-700 hover:text-blue-600 font-medium">Services</Link>
-              <Link href="/portfolio" className="text-gray-700 hover:text-blue-600 font-medium">Portfolio</Link>
-              <Link href="/blog" className="text-gray-700 hover:text-blue-600 font-medium">Blog</Link>
-              <Link href="/contact" className="text-gray-700 hover:text-blue-600 font-medium">Contact Us</Link>
+              <Link href="/certificates" className="text-gray-700 hover:text-blue-600 font-medium">Portfolio</Link>
+              <Link href="/contact-us" className="text-gray-700 hover:text-blue-600 font-medium">Contact Us</Link>
             </nav>
           </div>
         )}

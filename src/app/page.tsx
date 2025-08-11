@@ -16,7 +16,7 @@ import WhyChooseUsSection from "../components/why-choose-us-section";
 export default function Home() {
   return (
     <main className="min-h-screen">
-      <Header />
+      
       <HeroSection />
       <MarqueeSection />
       <AboutSection />
@@ -26,11 +26,11 @@ export default function Home() {
       <WhyChooseUsSection />
       <MarqueeSection />
       <ProcessSection />
-      <ContactSection />
+      {/* <ContactSection /> */}
       <TestimonialsSection />
       <ClientsSection />
       <MarqueeSection />
-      <Footer />
+      
     </main>
   )
 }
