@@ -24,7 +24,7 @@ export default function Component() {
     title: ` Certificate ${i + 1}`,
     issuer: "Certification Authority",
     date: "2024",
-    imageUrl: certificateImages[i] || "", // Get image URL or empty string
+    imageUrl: certificateImages[i] || "",
   }))
 
   return (

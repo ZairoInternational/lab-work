@@ -11,7 +11,7 @@ export default function MarqueeSection() {
   ];
 
   return (
-    <section className="bg-blue-600 py-4 overflow-hidden">
+    <section className="bg-blue-400 py-4 overflow-hidden">
       <div className="flex animate-marquee whitespace-nowrap">
         {[...items, ...items].map((item, index) => (
           <div key={index} className="flex items-center text-white mx-8">

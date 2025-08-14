@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { usePathname } from "next/navigation";
 import Header from "../components/header";
 import Footer from "../components/footer";
 import "./globals.css";
@@ -24,14 +25,18 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
+  const pathname=usePathname();
+  const isAdminRoute=pathname.startsWith("/admin");
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Header />
-        {children}
-        <Footer />
+        {!isAdminRoute && <Header />}
+        {children} 
+        {!isAdminRoute && <Footer />}
       </body>
     </html>
   );
