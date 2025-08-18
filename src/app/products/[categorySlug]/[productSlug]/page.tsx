@@ -25,10 +25,11 @@ import ProductModel from "../../../../models/product";
   updatedAt?: string;
 }
 
-type Props = { params: { categorySlug: string; productSlug: string } };
+// type Props = { params: <Promise{categorySlug: string; productSlug: string }>};
+type Props = { params: Promise<{ categorySlug: string; productSlug: string }> };
 
 export default async function ProductPage({ params }: Props) {
-  const { categorySlug, productSlug } = params;
+  const { categorySlug, productSlug } = await params;
 
   await connectDB();
 
@@ -111,7 +112,7 @@ export default async function ProductPage({ params }: Props) {
 }
 
 export async function generateMetadata({ params }: Props) {
-  const { productSlug, categorySlug } = params;
+  const { productSlug, categorySlug } =await params;
   await connectDB();
   const product= await ProductModel.findOne({ slug: productSlug }).lean<Product | null>();
   return {

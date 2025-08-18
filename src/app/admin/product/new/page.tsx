@@ -31,24 +31,35 @@ export default function NewProduct() {
   }, [])
 
   // Submit form
-  const submit = async () => {
-    setIsLoading(true)
-    try {
-      const payload = {
-        ...form,
-        price: form.price ? Number(form.price) : undefined,
-        images: form.images ? form.images.split(",").map((s) => s.trim()) : [],
-      }
+const submit = async () => {
+  setIsLoading(true);
+  try {
+    const payload = {
+      ...form,
+      price: form.price ? Number(form.price) : undefined,
+      images: form.images ? form.images.split(",").map((s) => s.trim()) : [],
+    };
 
-      await axios.post("/api/products", payload)
-      router.push("/admin/product")
-    } catch (error: any) {
-      console.error("Create product error:", error.response?.data || error.message)
-      alert(error.response?.data?.error || "Failed to create product")
-    } finally {
-      setIsLoading(false)
+    await axios.post("/api/products", payload);
+    router.push("/admin/product");
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      // ✅ Safe access to Axios error response
+      console.error("Create product error:", error.response?.data || error.message);
+      alert(error.response?.data?.error || "Failed to create product");
+    } else if (error instanceof Error) {
+      // ✅ Normal JS error
+      console.error("Create product error:", error.message);
+      alert(error.message || "Failed to create product");
+    } else {
+      // ✅ Fallback for unknown throw types (string, number, etc.)
+      console.error("Unexpected error:", error);
+      alert("An unknown error occurred");
     }
+  } finally {
+    setIsLoading(false);
   }
+};
 
   return (
     <div className="p-6 max-w-4xl mx-auto">

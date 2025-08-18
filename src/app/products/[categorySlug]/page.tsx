@@ -1,27 +1,41 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { connectDB } from "../../../lib/db";
-import Category from "../../../models/category";
-import Product from "../../../models/product";
+import CategoryModel from "../../../models/category";
+import ProductModel from "../../../models/product";
 import Link from "next/link";
 
-type Props = { params: { categorySlug: string } };
+type Props = { params: Promise<{ categorySlug: string } >};
 
 interface Category {
-    _id: string;
-    name: string;
-    slug: string;
+  _id: string;
+  name: string;
+  slug: string;
+}
+
+interface Product {
+  _id: string;
+  name: string;
+  slug: string;
+  category: string;
+  price?: number;
+  images: string[];
+  shortDescription?: string;
 }
 
 export default async function CategoryPage({ params }: Props) {
-  const { categorySlug } = params;
+  const { categorySlug } = await params;
 
   await connectDB();
-  const category = await Category.findOne({ slug: categorySlug }).lean<Category | null>();
+
+  
+  const category = await CategoryModel.findOne({ slug: categorySlug })
+    .lean<Category | null>();
   if (!category) return notFound();
 
-  const products = await Product.find({ category: category._id }).lean();
-
+  
+  const products = await ProductModel.find({ category: category._id })
+    .lean<Product[]>(); 
   return (
     <main className="container mx-auto px-4 py-8">
       <h1 className="text-2xl lg:text-3xl font-semibold mb-6">
@@ -32,7 +46,7 @@ export default async function CategoryPage({ params }: Props) {
         <p className="text-gray-600">No products in this category yet.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products.map((p: any) => (
+          {products.map((p) => (
             <Link
               key={p._id}
               href={`/products/${categorySlug}/${p.slug}`}
@@ -54,7 +68,9 @@ export default async function CategoryPage({ params }: Props) {
                 <div className="text-blue-600 mt-1">₹{p.price}</div>
               )}
               {p.shortDescription && (
-                <p className="text-sm text-gray-600 mt-2 line-clamp-2">{p.shortDescription}</p>
+                <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                  {p.shortDescription}
+                </p>
               )}
             </Link>
           ))}
@@ -63,4 +79,3 @@ export default async function CategoryPage({ params }: Props) {
     </main>
   );
 }
-

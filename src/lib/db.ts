@@ -1,17 +1,24 @@
 import mongoose from "mongoose";
-const Mongo_URL = process.env.MONGO_URL;
 
-console.log("Mongo URL from env:", Mongo_URL); // TEMP debug
+const MONGO_URL = process.env.MONGO_URL as string;
 
-export const connectDB = async () => {
-  if (!Mongo_URL) {
-    throw new Error("❌ MONGODB_URI is missing. Check .env.local");
+if (!MONGO_URL) {
+  throw new Error("Please define the MONGO_URL environment variable");
+}
+
+let isConnected = false;
+
+export async function connectDB() {
+  if (isConnected) {
+    return;
   }
 
   try {
-    await mongoose.connect(Mongo_URL, { dbName: "BenchtopLabs" });
+    await mongoose.connect(MONGO_URL, { dbName: "BenchtopLabs" });
+    isConnected = true;
     console.log("✅ Connected to MongoDB");
   } catch (error) {
     console.error("❌ Error connecting to MongoDB:", error);
+    throw error;
   }
-};
+}

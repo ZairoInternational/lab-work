@@ -2,10 +2,12 @@ import { NextResponse } from "next/server";
 import { connectDB } from "../../../../lib/db";
 import Product from "../../../../models/product";
 
-export async function GET(_: Request, { params }: { params: { slug: string } }) {
+// Get product by slug
+export async function GET(_: Request, { params }: { params: Promise<{ slug: string }> }) {
   try {
     await connectDB();
-    const product = await Product.findOne({ slug: params.slug }).populate("category");
+    const slug = await params;
+    const product = await Product.findOne({ slug: slug.slug }).populate("category");
     if (!product) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json(product);
   } catch {
@@ -13,31 +15,43 @@ export async function GET(_: Request, { params }: { params: { slug: string } }) 
   }
 }
 
-export async function PUT(req: Request, { params }: { params: { slug: string } }) {
-  await connectDB();
-  const data = await req.json();
+// Update product by slug
+export async function PUT(req: Request, { params }: { params: Promise<{ slug: string }> }) {
+  try {
+    await connectDB();
+    const slug = await params;
+    const data = await req.json();
 
-  const updated = await Product.findOneAndUpdate(
-    { slug: params.slug }, 
-    data,
-    { new: true }
-  );
+    const updated = await Product.findOneAndUpdate(
+      { slug: slug.slug },
+      data,
+      { new: true }
+    );
 
-  if (!updated) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (!updated) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(updated);
+  } catch {
+    return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
   }
-
-  return NextResponse.json(updated);
 }
 
 // Delete product by slug
-export async function DELETE(_: Request, { params }: { params: { slug: string } }) {
-  await connectDB();
-  const deleted = await Product.findOneAndDelete({ slug: params.slug });
+export async function DELETE(_: Request, { params }: { params: Promise<{ slug: string }> }) {
+  try {
+    await connectDB();
+    const slug = await params;
 
-  if (!deleted) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    const deleted = await Product.findOneAndDelete({ slug: slug.slug });
+
+    if (!deleted) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: "Failed to delete product" }, { status: 500 });
   }
-
-  return NextResponse.json({ success: true });
 }

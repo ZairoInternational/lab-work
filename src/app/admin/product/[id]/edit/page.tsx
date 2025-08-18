@@ -10,12 +10,12 @@ interface Category {
     slug: string;
 }
 interface Product {
-  _id: string;
+  _id?: string;
   name: string;
   slug: string;
   category: string | Category; // If populated, it'll be Category object
   price?: number;
-  images: string[];
+  images: string;
   shortDescription?: string;
   description?: string;
   specs?: Record<string, string | number>;
@@ -29,7 +29,18 @@ export default function EditProduct() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [form, setForm] = useState<any>(null);
+  const [form, setForm] = useState<Product>({
+    _id: "",
+    name: "",
+    slug: "",
+    category: "",
+    price: 0,
+    images: "",
+    shortDescription: "",
+    description: "",
+    specs: {},
+    inStock: true
+  });
 
   useEffect(() => {
     (async () => {
@@ -42,9 +53,9 @@ export default function EditProduct() {
       setForm({
         name: p.name,
         slug: p.slug,
-        category: typeof p.category === "string" ? p.category : (p.category as any)._id,
-        price: p.price ?? "",
-        images: (p.images || []).join(", "),
+        category: typeof p.category === "string" ? p.category : (p.category as Category)._id,
+        price: p.price ?? 0,
+        images: p.images || "",
         shortDescription: p.shortDescription ?? "",
         description: p.description ?? ""
       });
@@ -72,13 +83,13 @@ export default function EditProduct() {
                onChange={e=>setForm({...form, name: e.target.value})}/>
         <input className="border p-2 rounded" value={form.slug}
                onChange={e=>setForm({...form, slug: e.target.value})}/>
-        <select className="border p-2 rounded" value={form.category}
+        <select className="border p-2 rounded" value={form.category ? typeof form.category === "string" ? form.category : (form.category as Category)._id : ""} 
                 onChange={e=>setForm({...form, category: e.target.value})}>
           <option value="">Select category</option>
           {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
         </select>
         <input className="border p-2 rounded" type="number" value={form.price}
-               onChange={e=>setForm({...form, price: e.target.value})}/>
+               onChange={e=>setForm({...form, price: +e.target.value})}/>
         <input className="border p-2 rounded" value={form.images}
                onChange={e=>setForm({...form, images: e.target.value})}/>
         <textarea className="border p-2 rounded" value={form.shortDescription}
