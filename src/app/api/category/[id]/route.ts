@@ -2,11 +2,23 @@ import { NextResponse } from "next/server";
 import { connectDB } from "../../../../lib/db";
 import Category from "../../../../models/category";
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+type Params = {
+  params: {
+    id: string;
+  };
+};
+
+
+export async function PUT(req: Request, { params }: Params) {
   await connectDB();
-  const data = await req.json();
-  const updated = await Category.findByIdAndUpdate(params.id, data, { new: true });
-  if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const body = await req.json();
+
+  const updated = await Category.findByIdAndUpdate(params.id, body, { new: true });
+
+  if (!updated) {
+    return NextResponse.json({ error: "Category not found" }, { status: 404 });
+  }
+
   return NextResponse.json(updated);
 }
 

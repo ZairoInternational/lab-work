@@ -1,19 +1,20 @@
 import { NextResponse } from "next/server";
+import jwt from "jsonwebtoken";
 
 export async function POST(req: Request) {
-  const { password } = await req.json();
-  if (!password) return NextResponse.json({ error: "Password required" }, { status: 400 });
+  try {
+    const { email, password } = await req.json();
 
-  if (password !== process.env.ADMIN_PASSWORD) {
-    return NextResponse.json({ error: "Invalid password" }, { status: 401 });
+    if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
+      
+      const token = jwt.sign({ email }, process.env.JWT_SECRET as string, { expiresIn: "1h" });
+
+      return NextResponse.json({ success: true, token });
+    }
+
+    return NextResponse.json({ success: false, message: "Invalid credentials" }, { status: 401 });
+  } catch (error) {
+    return NextResponse.json({ success: false, message: "Server error" }, { status: 500 });
   }
-
-  const res = NextResponse.json({ success: true });
-  res.cookies.set("admin_auth", "ok", {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 8, // 8h
-  });
-  return res;
 }
+

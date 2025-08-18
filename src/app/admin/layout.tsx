@@ -2,7 +2,7 @@
 "use client"
 
 import type React from "react"
-
+import AdminGuard from "@/src/components/admin-guard"
 import Link from "next/link"
 
 export default function AdminLayout({
@@ -11,6 +11,7 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   return (
+    <AdminGuard>
     <div className="min-h-screen flex bg-gray-50">
       <aside className="w-72 bg-white border-r border-gray-200 flex flex-col">
         {/* Header */}
@@ -36,7 +37,7 @@ export default function AdminLayout({
         {/* Navigation */}
         <nav className="flex-1 p-6">
           <div className="space-y-2">
-            <NavLink href="/admin" icon={DashboardIcon}>
+            <NavLink href="/admin/dashboard" icon={DashboardIcon}>
               Dashboard
             </NavLink>
             <NavLink href="/admin/categories" icon={CategoryIcon}>
@@ -49,7 +50,7 @@ export default function AdminLayout({
         </nav>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-100">
+        {/* <div className="p-6 border-t border-gray-100">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
               <span className="text-sm font-medium text-blue-600">A</span>
@@ -59,11 +60,12 @@ export default function AdminLayout({
               <p className="text-xs text-gray-500">admin@example.com</p>
             </div>
           </div>
-        </div>
+        </div> */}
       </aside>
 
       <main className="flex-1 bg-gray-50">{children}</main>
     </div>
+    </AdminGuard>
   )
 }
 

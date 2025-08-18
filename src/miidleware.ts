@@ -1,22 +1,28 @@
 import { NextResponse } from "next/server";
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
+import jwt from "jsonwebtoken";
 
+export function middleware(req: NextRequest) {
+  // Protect only /admin routes
+  if (req.nextUrl.pathname.startsWith("/admin")) {
+    const token = req.cookies.get("admin_token")?.value;
 
-export function middleware(req:NextRequest){
-    const {pathname}=req.nextUrl
-    
-    if(pathname.startsWith("/admin") && pathname !== "/admin/login"){
-        const cookie=req.cookies.get("admin_auth");
-        if(!cookie || cookie.value !== "ok"){
-            const url=req.nextUrl.clone();
-            url.pathname="/admin/login";
-            return NextResponse.redirect(url);
-        }
+    if (!token) {
+      return NextResponse.redirect(new URL("/admin/login", req.url));
     }
 
-    return NextResponse.next();
+    try {
+      jwt.verify(token, process.env.JWT_SECRET as string);
+      return NextResponse.next(); // allow request
+    } catch {
+      return NextResponse.redirect(new URL("/admin/login", req.url));
+    }
+  }
+
+  return NextResponse.next();
 }
 
-export const config={
-    matcher:["/admin/:path*"],
-}
+// Only run middleware for /admin routes
+export const config = {
+  matcher: ["/admin/:path*"],
+};
