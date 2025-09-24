@@ -33,7 +33,7 @@ export default function ProductsAdmin() {
   }
 
   const del = async (id: string) => {
-    await axios.delete(`/api/product/${id}`)
+    await axios.delete(`/api/products/${id}`)
     load()
   }
 
@@ -155,7 +155,7 @@ export default function ProductsAdmin() {
                     <div className="flex items-center space-x-3">
                       <Link
                         className="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-200"
-                        href={`/admin/products/${p._id}/edit`}
+                        href={`/admin/product/${p._id}/edit`}
                       >
                         <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path

@@ -1,5 +1,4 @@
 "use client"
-
 import type React from "react"
 import Link from "next/link"
 import axios from "axios";
@@ -136,7 +135,6 @@ function StatsCard({
   )
 }
 
-// Stats Icons
 function ProductStatsIcon() {
   return (
     <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

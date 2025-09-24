@@ -1,12 +1,13 @@
 import { CheckCircle } from 'lucide-react'
+import Link from 'next/link';
 
 export default function AboutSection() {
   const features = [
-    "The Science Behind Our Success",
-    "Innovating for a Better Tomorrow", 
-    "Beyond Boundaries: Our Scientific Mission",
-    "Driven by Curiosity, Defined by Excellence",
-    "Passion for Science, Commitment to Progress"
+    "Products tested on stringent parameters to ensure optimum quality.",
+    "Ensuring maximum output and reliable performance.", 
+    "Beyond Boundaries our Scientific Mission",
+    "Focus on cost efficiency with minimum operating and maintenance costs.",
+    "Thoroughly tested from manufacturing stage to final delivery."
   ]
 
   return (
@@ -17,43 +18,50 @@ export default function AboutSection() {
           <div className="relative">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-4">
-                <img 
-                  src="/assets/laboratory research.png" 
+                <img
+                  src="/assets/laboratory research.png"
                   alt="Laboratory Equipment"
                   className="rounded-lg shadow-lg w-full"
                 />
-                <img 
-                  src="/assets/research tools.png" 
+                <img
+                  src="/assets/research tools.png"
                   alt="Research Tools"
                   className="rounded-lg shadow-lg w-full"
                 />
               </div>
               <div className="space-y-4 mt-8">
-                <img 
-                  src="/assets/lab work.png" 
+                <img
+                  src="/assets/lab work.png"
                   alt="Scientific Analysis"
                   className="rounded-lg shadow-lg w-full"
                 />
-                <img 
-                  src="/assets/scientific analysis.png" 
+                <img
+                  src="/assets/scientific analysis.png"
                   alt="Laboratory Work"
                   className="rounded-lg shadow-lg w-full"
                 />
               </div>
             </div>
-            
           </div>
 
           {/* Content */}
           <div>
-            <span className="text-blue-600 font-semibold text-sm uppercase tracking-wider">About Us</span>
+            <span className="text-blue-600 font-semibold text-sm uppercase tracking-wider">
+              About Us
+            </span>
             <h2 className="text-4xl font-bold text-gray-900 mt-4 mb-6">
-              Leading the Future of Scientific Exploration
+              GREETINGS FROM BENCHTOP EQUIPMENT INC.
             </h2>
             <p className="text-gray-600 text-lg mb-8 leading-relaxed">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis congue, diam ut hendrerit elementum, 
-              dolor metus eleifend erat, vitae scelerisque massa justo non dolor. Cras in pulvinar augue. 
-              Donec at consequat dui.
+              We, Benchtop Equipment Inc., have gained the faith and trust of
+              our customers with time. Our products are highly desired in the
+              market and we have developed them in a manner that they can
+              provide maximum output at minimum operating and maintenance costs.
+              Our excellent client management policies have helped us in
+              expanding our national list of clients. Our quality controllers
+              and supervisors take care of the fact that only defect-free
+              products reach the market and they are thoroughly tested from the
+              time of manufacturing till ultimate delivery.
             </p>
 
             <ul className="space-y-4 mb-8">
@@ -66,12 +74,12 @@ export default function AboutSection() {
             </ul>
 
             <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-medium transition-colors duration-300 flex items-center space-x-2">
-              <span>View Research</span>
-              <span>→</span>
+              <Link href="/about-us">Know More</Link>
+            
             </button>
           </div>
         </div>
       </div>
     </section>
-  )
+  );
 }

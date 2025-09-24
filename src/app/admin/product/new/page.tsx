@@ -30,6 +30,28 @@ export default function NewProduct() {
     axios.get("/api/category/getCategory").then((res) => setCategories(res.data))
   }, [])
 
+
+const handleFileUpload = async (file: File) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await axios.post("/api/upload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    if (res.data.url) {
+      setForm((prev) => ({ ...prev, images: res.data.url }));
+    } else {
+      alert("Upload failed");
+    }
+  } catch (error) {
+    console.error("Error uploading file:", error);
+    alert("Upload failed");
+  }
+};
   // Submit form
 const submit = async () => {
   setIsLoading(true);
@@ -37,7 +59,7 @@ const submit = async () => {
     const payload = {
       ...form,
       price: form.price ? Number(form.price) : undefined,
-      images: form.images ? form.images.split(",").map((s) => s.trim()) : [],
+      images: form.images ? form.images : "",
     };
 
     await axios.post("/api/products", payload);
@@ -69,7 +91,10 @@ const submit = async () => {
             Admin
           </Link>
           <span>/</span>
-          <Link href="/admin/product" className="hover:text-blue-400 transition-colors">
+          <Link
+            href="/admin/product"
+            className="hover:text-blue-400 transition-colors"
+          >
             Products
           </Link>
           <span>/</span>
@@ -77,15 +102,29 @@ const submit = async () => {
         </div>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Add New Product</h1>
-            <p className="text-gray-600 mt-1">Create a new product for your store</p>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Add New Product
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Create a new product for your store
+            </p>
           </div>
           <Link
             href="/admin/product"
             className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
             </svg>
             Back to Products
           </Link>
@@ -97,10 +136,14 @@ const submit = async () => {
           <div className="grid gap-6 max-w-2xl">
             {/* Basic Information Section */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Basic Information
+              </h3>
               <div className="grid gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Product Name *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Product Name *
+                  </label>
                   <input
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
                     placeholder="Enter product name"
@@ -110,22 +153,30 @@ const submit = async () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Product Slug *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Product Slug *
+                  </label>
                   <input
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
                     placeholder="product-slug"
                     value={form.slug}
                     onChange={(e) => setForm({ ...form, slug: e.target.value })}
                   />
-                  <p className="text-xs text-gray-500 mt-1">URL-friendly version of the name</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    URL-friendly version of the name
+                  </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Category *
+                  </label>
                   <select
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all bg-white"
                     value={form.categorySlug}
-                    onChange={(e) => setForm({ ...form, categorySlug: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, categorySlug: e.target.value })
+                    }
                   >
                     <option value="">Select a category</option>
                     {categories.map((c) => (
@@ -137,16 +188,22 @@ const submit = async () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Price *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Price *
+                  </label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
+                    <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">
+                      ₹
+                    </span>
                     <input
                       className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
                       placeholder="0.00"
                       type="number"
                       step="0.01"
                       value={form.price}
-                      onChange={(e) => setForm({ ...form, price: e.target.value })}
+                      onChange={(e) =>
+                        setForm({ ...form, price: e.target.value })
+                      }
                     />
                   </div>
                 </div>
@@ -154,7 +211,7 @@ const submit = async () => {
             </div>
 
             {/* Media Section */}
-            <div className="border-t border-gray-200 pt-6">
+            {/* <div className="border-t border-gray-200 pt-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Photos</h3>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
@@ -166,31 +223,66 @@ const submit = async () => {
                 />
                 <p className="text-xs text-gray-500 mt-1">Separate multiple image URLs with commas</p>
               </div>
+            </div> */}
+            <div className="border-t border-gray-200 pt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Photos
+              </h3>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Upload Product Image
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload(file);
+                  }}
+                />
+                {form.images && (
+                  <img
+                    src={form.images}
+                    alt="Preview"
+                    className="mt-2 w-32 rounded-lg border"
+                  />
+                )}
+              </div>
             </div>
 
             {/* Description Section */}
             <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Description</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Description
+              </h3>
               <div className="grid gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Short Description</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Short Description
+                  </label>
                   <textarea
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all resize-none"
                     placeholder="Brief description for product listings"
                     rows={3}
                     value={form.shortDescription}
-                    onChange={(e) => setForm({ ...form, shortDescription: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, shortDescription: e.target.value })
+                    }
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Description</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Full Description
+                  </label>
                   <textarea
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all resize-none"
                     placeholder="Detailed product description"
                     rows={6}
                     value={form.description}
-                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, description: e.target.value })
+                    }
                   />
                 </div>
               </div>
@@ -206,7 +298,11 @@ const submit = async () => {
                 >
                   {isLoading ? (
                     <>
-                      <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                      <svg
+                        className="animate-spin w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
                         <circle
                           className="opacity-25"
                           cx="12"
@@ -225,8 +321,18 @@ const submit = async () => {
                     </>
                   ) : (
                     <>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 4v16m8-8H4"
+                        />
                       </svg>
                       Create Product
                     </>
@@ -244,5 +350,5 @@ const submit = async () => {
         </div>
       </div>
     </div>
-  )
+  );
 }

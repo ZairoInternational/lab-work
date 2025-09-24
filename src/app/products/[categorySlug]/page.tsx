@@ -19,7 +19,7 @@ interface Product {
   slug: string;
   category: string;
   price?: number;
-  images: string[];
+  images?: string;
   shortDescription?: string;
 }
 
@@ -36,6 +36,8 @@ export default async function CategoryPage({ params }: Props) {
   
   const products = await ProductModel.find({ category: category._id })
     .lean<Product[]>(); 
+
+    console.log("Products",products)
   return (
     <main className="container mx-auto px-4 py-8">
       <h1 className="text-2xl lg:text-3xl font-semibold mb-6">
@@ -53,13 +55,13 @@ export default async function CategoryPage({ params }: Props) {
               className="border rounded-xl p-4 hover:shadow-md transition"
             >
               <div className="aspect-[4/3] bg-gray-50 rounded-lg overflow-hidden mb-3">
-                {p.images?.[0] ? (
+                {p.images ? (
                   <Image
-                    src={p.images[0]}
-                    alt={p.name}
+                    src={p?.images}
+                    alt={p?.name}
                     width={800}
                     height={600}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                 ) : null}
               </div>

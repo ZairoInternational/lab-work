@@ -16,7 +16,7 @@ import ProductModel from "../../../../models/product";
   slug: string;
   category: string | Category; 
   price?: number;
-  images: string[];
+  images: string;
   shortDescription?: string;
   description?: string;
   specs?: Record<string, string | number>;
@@ -25,7 +25,6 @@ import ProductModel from "../../../../models/product";
   updatedAt?: string;
 }
 
-// type Props = { params: <Promise{categorySlug: string; productSlug: string }>};
 type Props = { params: Promise<{ categorySlug: string; productSlug: string }> };
 
 export default async function ProductPage({ params }: Props) {
@@ -45,34 +44,20 @@ export default async function ProductPage({ params }: Props) {
   return (
     <main className="container mx-auto px-4 py-8">
       <div className="grid lg:grid-cols-2 gap-8">
-        {/* Images */}
+
         <div>
           <div className="aspect-[4/3] bg-gray-50 rounded-xl overflow-hidden">
-            {product.images?.[0] ? (
+            {product.images ? (
               <Image
-                src={product.images[0]}
+                src={product.images}
                 alt={product.name}
                 width={1200}
                 height={900}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             ) : null}
           </div>
-          {product.images?.length > 1 && (
-            <div className="flex gap-3 mt-3">
-              {product.images.slice(1).map((img, i) => (
-                <div key={i} className="w-20 h-20 bg-gray-50 rounded overflow-hidden">
-                  <Image
-                    src={img}
-                    alt={`${product.name}-${i}`}
-                    width={200}
-                    height={200}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
+          
         </div>
 
         {/* Info */}

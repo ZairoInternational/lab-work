@@ -4,69 +4,72 @@
 import type React from "react"
 import AdminGuard from "@/src/components/admin-guard"
 import Link from "next/link"
-
+import { usePathname } from "next/navigation"
+import { div } from "framer-motion/client"
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+
+  const pathname = usePathname();
+  console.log("pathname",pathname);
+
   return (
     <AdminGuard>
-    <div className="min-h-screen flex bg-gray-50">
-      <aside className="w-72 bg-white border-r border-gray-200 flex flex-col">
-        {/* Header */}
-        <div className="p-6 border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-400 rounded-xl flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
+      <div className="min-h-screen flex bg-gray-50">
+        {pathname === "/admin" ? (
+          <div></div>
+        ) : (
+          <aside className="w-72 bg-white border-r border-gray-200 flex flex-col">
+            <div className="p-6 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-400 rounded-xl flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">Admin</h2>
+                  <p className="text-sm text-gray-500">Dashboard</p>
+                </div>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">Admin</h2>
-              <p className="text-sm text-gray-500">Dashboard</p>
-            </div>
-          </div>
-        </div>
+            <nav className="flex-1 p-6">
+              {" "}
+              <div className="space-y-2">
+                {" "}
+                <NavLink href="/admin/dashboard" icon={DashboardIcon}>
+                  {" "}
+                  Dashboard{" "}
+                </NavLink>{" "}
+                <NavLink href="/admin/categories" icon={CategoryIcon}>
+                  {" "}
+                  Categories{" "}
+                </NavLink>{" "}
+                <NavLink href="/admin/product" icon={ProductIcon}>
+                  {" "}
+                  Products{" "}
+                </NavLink>{" "}
+              </div>{" "}
+            </nav>
+          </aside>
+        )}
 
-        {/* Navigation */}
-        <nav className="flex-1 p-6">
-          <div className="space-y-2">
-            <NavLink href="/admin/dashboard" icon={DashboardIcon}>
-              Dashboard
-            </NavLink>
-            <NavLink href="/admin/categories" icon={CategoryIcon}>
-              Categories
-            </NavLink>
-            <NavLink href="/admin/product" icon={ProductIcon}>
-              Products
-            </NavLink>
-          </div>
-        </nav>
-
-        {/* Footer */}
-        {/* <div className="p-6 border-t border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-sm font-medium text-blue-600">A</span>
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900">Admin User</p>
-              <p className="text-xs text-gray-500">admin@example.com</p>
-            </div>
-          </div>
-        </div> */}
-      </aside>
-
-      <main className="flex-1 bg-gray-50">{children}</main>
-    </div>
+        <main className="flex-1 bg-gray-50">{children}</main>
+      </div>
     </AdminGuard>
-  )
+  );
 }
 
 function NavLink({
@@ -78,9 +81,8 @@ function NavLink({
   children: React.ReactNode
   icon: React.ComponentType<{ className?: string }>
 }) {
-  // Note: In a real app, you'd use usePathname() from next/navigation
-  // For now, we'll style all links the same way
-  const isActive = false // You can implement active state logic here
+  
+  const isActive = false
 
   return (
     <Link
@@ -91,7 +93,7 @@ function NavLink({
           isActive
             ? "bg-blue-50 text-blue-600 border border-blue-100"
             : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-        }
+       }
       `}
     >
       <Icon className={`w-5 h-5 ${isActive ? "text-blue-500" : "text-gray-400"}`} />
@@ -100,7 +102,6 @@ function NavLink({
   )
 }
 
-// Icon Components
 function DashboardIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
