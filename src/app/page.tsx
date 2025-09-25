@@ -35,7 +35,7 @@ export default function Home() {
       <MarqueeSection />
       <AboutSection />
       <ServicesSection />
-      <BetterForYouSection />
+      {/* <BetterForYouSection /> */}
       <CaseStudiesSection />
       <WhyChooseUsSection />
       <MarqueeSection />

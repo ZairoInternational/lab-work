@@ -16,7 +16,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(products);
     }
 
-    const products = await Product.find().limit(100);
+    const products = await Product.find()
+  .populate("category", "name slug") // only fetch name + slug
+  .limit(100);
     return NextResponse.json(products);
   } catch (e) {
     return NextResponse.json({ error: "Failed to fetch products" }, { status: 500 });
@@ -28,7 +30,7 @@ export async function POST(req: Request) {
   try {
     await connectDB();
     const body = await req.json();
-    const { name, slug, categorySlug, price, images, shortDescription, description, specs, inStock } = body;
+    const { name, slug, categorySlug, price, images,pdf, shortDescription, description, specs, inStock } = body;
     console.log("got the body",body);
     // Validate required fields
     if (!name || !slug || !categorySlug) {
@@ -55,6 +57,7 @@ export async function POST(req: Request) {
       category: category._id,
       price,
       images,
+      pdf,
       shortDescription,
       description,
       specs,

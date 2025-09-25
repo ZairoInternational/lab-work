@@ -1,21 +1,91 @@
 const products = [
-  { id: 1, name: "Mini Mixture", category: "Mixing" , image:"/product-range/mini-mixture.png"},
-  { id: 2, name: "UV Analyzer", category: "Analysis", image:"" },
-  { id: 3, name: "UV Transilluminator", category: "Imaging", image:"" },
-  { id: 4, name: "Shaker", category: "Mixing" , image:""},
-  { id: 5, name: "Digital Shaker", category: "Mixing", image:"" },
-  { id: 6, name: "RTPCR", category: "Analysis" },
-  { id: 7, name: "Refrigerated Centrifuge", category: "Centrifuge", image:"" },
-  { id: 8, name: "Roller Mixer", category: "Mixing", image:"" },
-  { id: 9, name: "Incubator", category: "Heating" , image:""},
-  { id: 10, name: "Autoclave", category: "Sterilization" , image:""},
-  { id: 11, name: "Microscope", category: "Imaging" , image:""},
-  { id: 12, name: "pH Meter", category: "Analysis" , image:""},
-  { id: 13, name: "Spectrophotometer", category: "Analysis" , image:""},
-  { id: 14, name: "Vortex Mixer", category: "Mixing", image:"" },
-  { id: 15, name: "Water Bath", category: "Heating" , image:""},
-  { id: 16, name: "Pipette", category: "Dispensing" , image:""},
-]
+  {
+    id: 1,
+    name: "Mini Mixture",
+    category: "Mixing",
+    image: "/product-range/6.png",
+  },
+  {
+    id: 2,
+    name: "UV Analyzer",
+    category: "Analysis",
+    image: "product-range/14.png",
+  },
+  {
+    id: 3,
+    name: "UV Transilluminator",
+    category: "Imaging",
+    image: "product-range/13.png",
+  },
+  { id: 4, name: "Shaker", category: "Mixing", image: "product-range/12.png" },
+  {
+    id: 5,
+    name: "Digital Shaker",
+    category: "Mixing",
+    image: "product-range/16.png",
+  },
+  { id: 6, name: "RTPCR", category: "Analysis", image: "product-range/11.png" },
+  {
+    id: 7,
+    name: "Refrigerated Centrifuge",
+    category: "Centrifuge",
+    image: "product-range/9.png",
+  },
+  {
+    id: 8,
+    name: "Roller Mixer",
+    category: "Mixing",
+    image: "product-range/10.png",
+  },
+  {
+    id: 9,
+    name: "Mini Centrifuge",
+    category: "Heating",
+    image: "product-range/1.png",
+  },
+  {
+    id: 10,
+    name: "Mini Dry Bath Incubator",
+    category: "Sterilization",
+    image: "product-range/8.png",
+  },
+  {
+    id: 11,
+    name: "Orbital Shaker",
+    category: "Imaging",
+    image: "product-range/7.png",
+  },
+  {
+    id: 12,
+    name: "Lab Furniture",
+    category: "Analysis",
+    image: "product-range/5.png",
+  },
+  {
+    id: 13,
+    name: "Incubator Shaker",
+    category: "Analysis",
+    image: "product-range/3.png",
+  },
+  {
+    id: 14,
+    name: "Air Shower",
+    category: "Mixing",
+    image: "product-range/4.png",
+  },
+  {
+    id: 15,
+    name: "Freeze Dryer",
+    category: "Heating",
+    image: "product-range/2.png",
+  },
+  {
+    id: 16,
+    name: "Water Bath",
+    category: "Dispensing",
+    image: "product-range/15.png",
+  },
+];
 
 export default function ProductRange() {
   return (
@@ -28,7 +98,12 @@ export default function ProductRange() {
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-3 mb-4">
             <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-blue-400 to-blue-500 rounded-xl shadow-lg">
-              <svg className="w-5 h-5  text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-5 h-5  text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -50,26 +125,31 @@ export default function ProductRange() {
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-4 gap-8 justify-items-center">
             {products.map((product) => (
-              <div key={product.id} className="group relative w-32 h-32 cursor-pointer">
+              <div
+                key={product.id}
+                className="group relative w-32 h-32 cursor-pointer"
+              >
                 {/* Main circle container */}
                 <div className="absolute inset-0 rounded-full bg-white border-2 border-blue-200 group-hover:border-blue-400 transition-all duration-300 shadow-lg group-hover:shadow-xl group-hover:shadow-blue-200/50 overflow-hidden">
                   {/* Product image */}
-                  <div
-                    className="absolute inset-0 bg-cover bg-center opacity-90 group-hover:opacity-40 transition-all duration-300 rounded-full"
-                    style={{
-                      // backgroundImage: `url(${product.image})`,
-                      backgroundImage: `url("/product-range/mini-mixture.png")`
-                    }}
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="absolute inset-0 w-full h-full object-cover rounded-full opacity-90 group-hover:opacity-40 transition-all duration-300"
                   />
 
                   {/* Blue gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-400/10 to-blue-500/20 group-hover:from-blue-500/20 group-hover:to-blue-600/30 transition-all duration-300 rounded-full" />
+                  {/* <div className="absolute inset-0 bg-gradient-to-br from-blue-400/10 to-blue-500/20 group-hover:from-blue-500/20 group-hover:to-blue-600/30 transition-all duration-300 rounded-full" /> */}
 
                   {/* Hover text overlay */}
                   <div className="absolute inset-0 bg-blue-600/95 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-full">
                     <div className="text-center px-2">
-                      <span className="text-white font-semibold text-xs block leading-tight">{product.name}</span>
-                      <span className="text-blue-100 text-xs mt-1 block">{product.category}</span>
+                      <span className="text-white font-semibold text-xs block leading-tight">
+                        {product.name}
+                      </span>
+                      <span className="text-blue-100 text-xs mt-1 block">
+                        {product.category}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -85,5 +165,5 @@ export default function ProductRange() {
         </div>
       </div>
     </div>
-  )
+  );
 }

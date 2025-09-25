@@ -1,87 +1,116 @@
-"use client"
-import { useEffect, useState } from "react"
-import axios from "axios"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
+"use client";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { useRouter } from "next/navigation";
+import { Document, Page } from "react-pdf";
+import Link from "next/link";
 
 interface Category {
-  _id: string
-  name: string
-  slug: string
+  _id: string;
+  name: string;
+  slug: string;
 }
 
 export default function NewProduct() {
-  const router = useRouter()
-  const [categories, setCategories] = useState<Category[]>([])
+  const router = useRouter();
+  const [categories, setCategories] = useState<Category[]>([]);
   const [form, setForm] = useState({
     name: "",
     slug: "",
     categorySlug: "",
     price: "",
     images: "",
+    pdf: "",
     shortDescription: "",
     description: "",
-  })
+  });
 
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
 
   // Fetch categories
   useEffect(() => {
-    axios.get("/api/category/getCategory").then((res) => setCategories(res.data))
-  }, [])
+    axios
+      .get("/api/category/getCategory")
+      .then((res) => setCategories(res.data));
+  }, []);
 
+  const handleFileUpload = async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
 
-const handleFileUpload = async (file: File) => {
-  try {
-    const formData = new FormData();
-    formData.append("file", file);
+      const res = await axios.post("/api/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-    const res = await axios.post("/api/upload", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-
-    if (res.data.url) {
-      setForm((prev) => ({ ...prev, images: res.data.url }));
-    } else {
+      if (res.data.url) {
+        setForm((prev) => ({ ...prev, images: res.data.url }));
+      } else {
+        alert("Upload failed");
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
       alert("Upload failed");
     }
-  } catch (error) {
-    console.error("Error uploading file:", error);
-    alert("Upload failed");
-  }
-};
-  // Submit form
-const submit = async () => {
-  setIsLoading(true);
-  try {
-    const payload = {
-      ...form,
-      price: form.price ? Number(form.price) : undefined,
-      images: form.images ? form.images : "",
-    };
+  };
 
-    await axios.post("/api/products", payload);
-    router.push("/admin/product");
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      // ✅ Safe access to Axios error response
-      console.error("Create product error:", error.response?.data || error.message);
-      alert(error.response?.data?.error || "Failed to create product");
-    } else if (error instanceof Error) {
-      // ✅ Normal JS error
-      console.error("Create product error:", error.message);
-      alert(error.message || "Failed to create product");
-    } else {
-      // ✅ Fallback for unknown throw types (string, number, etc.)
-      console.error("Unexpected error:", error);
-      alert("An unknown error occurred");
+  const handlePdfUpload = async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await axios.post("/api/uploadPdf", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (res.data.url) {
+        setForm((prev) => ({ ...prev, pdf: res.data.url }));
+      } else {
+        alert("Upload failed");
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      alert("Upload failed");
     }
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
+  // Submit form
+  const submit = async () => {
+    setIsLoading(true);
+    try {
+      const payload = {
+        ...form,
+        price: form.price ? Number(form.price) : undefined,
+        images: form.images ? form.images : "",
+        pdf: form.pdf ? form.pdf : "",
+      };
+
+      await axios.post("/api/products", payload);
+      router.push("/admin/product");
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        // ✅ Safe access to Axios error response
+        console.error(
+          "Create product error:",
+          error.response?.data || error.message
+        );
+        alert(error.response?.data?.error || "Failed to create product");
+      } else if (error instanceof Error) {
+        // ✅ Normal JS error
+        console.error("Create product error:", error.message);
+        alert(error.message || "Failed to create product");
+      } else {
+        // ✅ Fallback for unknown throw types (string, number, etc.)
+        console.error("Unexpected error:", error);
+        alert("An unknown error occurred");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -247,6 +276,29 @@ const submit = async () => {
                     className="mt-2 w-32 rounded-lg border"
                   />
                 )}
+              </div>
+            </div>
+
+            <div className="border-t border-gray-200 pt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">PDF</h3>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Upload Product Description PDF
+                </label>
+                <input
+                  type="file"
+                  accept="application/pdf/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handlePdfUpload(file);
+                  }}
+                />
+
+                {form.pdf && (
+  <div className="mt-2 w-64 h-80 border rounded-lg overflow-hidden">
+    <embed src={form.pdf} type="application/pdf" width="100%" height="100%" />
+  </div>
+)}
               </div>
             </div>
 

@@ -12,7 +12,7 @@ interface Product {
   _id: string
   name: string
   slug: string
-  category: string | Category 
+  category:  Category | string
   price?: number
   images: string[]
   shortDescription?: string
@@ -111,6 +111,20 @@ export default function ProductsAdmin() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
+                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                      />
+                    </svg>
+                    Category
+                  </div>
+                </th>
+
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 uppercase tracking-wider">
+                  <div className="flex items-center">
+                    <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
                         d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
                       />
                     </svg>
@@ -140,6 +154,9 @@ export default function ProductsAdmin() {
                 <tr key={p._id} className="hover:bg-gray-50 transition-colors duration-150">
                   <td className="px-6 py-4">
                     <div className="font-medium text-gray-900">{p.name}</div>
+                  </td>
+                  <td>
+                    <div className="font-medium text-gray-900">{typeof p.category === "string" ? p.category : p.category?.name}</div>
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-gray-600 font-mono text-sm bg-gray-100 px-2 py-1 rounded">{p.slug}</span>
