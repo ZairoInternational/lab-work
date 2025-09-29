@@ -5,7 +5,7 @@ import "../../../../models/category";
 
 export async function GET(
   _: Request,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     await connectDB();

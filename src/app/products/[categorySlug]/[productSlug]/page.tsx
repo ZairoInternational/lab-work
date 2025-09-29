@@ -31,16 +31,32 @@ interface Product {
   updatedAt?: string;
 }
 
-type Props = { params: { categorySlug: string; productSlug: string } };
+type Props = { 
+  params: Promise<{ categorySlug: string; productSlug: string }> 
+};
 
 export default function ProductPage({ params }: Props) {
-  const { categorySlug, productSlug } = params;
+  // const { categorySlug, productSlug } = await params;
   const router = useRouter();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+   const [categorySlug, setCategorySlug] = useState<string>("");
+  const [productSlug, setProductSlug] = useState<string>("");
+
   useEffect(() => {
+    const unwrapParams = async () => {
+      const resolvedParams = await params;
+      setCategorySlug(resolvedParams.categorySlug);
+      setProductSlug(resolvedParams.productSlug);
+    };
+    unwrapParams();
+  }, [params]);
+
+  useEffect(() => {
+
+    if (!productSlug || !categorySlug) return;
     const fetchProduct = async () => {
       try {
         setLoading(true);
@@ -158,17 +174,7 @@ export default function ProductPage({ params }: Props) {
                     {product.name}
                   </h1>
                   <CheckoutButton product={product} />
-                  {/* {typeof product.price === "number" && (
-                    <div className="text-3xl font-bold text-blue-600">
-                      {formatPrice(product.price)}
-                    </div>
-                  )} */}
-
-                  {/* {product.inStock && (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 mt-2">
-                      In Stock
-                    </span>
-                  )} */}
+                  
                 </div>
 
                 {/* Short Description */}
