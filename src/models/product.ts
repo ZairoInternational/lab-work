@@ -8,6 +8,7 @@ const ProductSchema = new Schema(
     price: { type: Number, default: 0 },
     images: { type: String, default: null },
     pdf: { type: String, default: null },
+
     shortDescription: { type: String },
     description: { type: String },
     specs: { type: Schema.Types.Mixed }, // key-value spec table

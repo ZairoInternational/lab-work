@@ -103,7 +103,7 @@ export default function NewProduct() {
         console.error("Create product error:", error.message);
         alert(error.message || "Failed to create product");
       } else {
-        // ✅ Fallback for unknown throw types (string, number, etc.)
+    
         console.error("Unexpected error:", error);
         alert("An unknown error occurred");
       }
@@ -216,7 +216,7 @@ export default function NewProduct() {
                   </select>
                 </div>
 
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Price *
                   </label>
@@ -235,7 +235,7 @@ export default function NewProduct() {
                       }
                     />
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
 
@@ -287,18 +287,18 @@ export default function NewProduct() {
                 </label>
                 <input
                   type="file"
-                  accept="application/pdf/*"
+                  accept="image/*"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) handlePdfUpload(file);
                   }}
                 />
 
-                {form.pdf && (
+                {/* {form.pdf && (
   <div className="mt-2 w-64 h-80 border rounded-lg overflow-hidden">
     <embed src={form.pdf} type="application/pdf" width="100%" height="100%" />
   </div>
-)}
+)} */}
               </div>
             </div>
 
