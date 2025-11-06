@@ -11,9 +11,11 @@ export async function GET(
     await connectDB();
 
     const { slug } = await params;
+
+    const trimmedSlug =slug.trim();
     console.log("slug param:", slug);
 
-    const product = await Product.findOne({ slug }).populate("category");
+    const product = await Product.findOne({ slug:trimmedSlug }).populate("category");
 
     console.log("expecting product", product);
 
