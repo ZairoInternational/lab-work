@@ -23,7 +23,11 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    return NextResponse.json(product);
+    return NextResponse.json(product,{
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
+      }
+    });
   } catch (err) {
     console.error("API error:", err);
     return NextResponse.json(
