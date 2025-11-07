@@ -10,8 +10,9 @@ export async function POST(req: Request) {
     if (!name || !slug) {
       return NextResponse.json({ error: 'Name and slug are required' }, { status: 400 });
     }
+    const trimmedSlug=slug.trim();
 
-    const newCategory = await Category.create({ name, slug });
+    const newCategory = await Category.create({ name, slug: trimmedSlug });
     return NextResponse.json(newCategory);
   } catch (error) {
     return NextResponse.json({ error: 'Failed to create category' }, { status: 500 });

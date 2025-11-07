@@ -13,11 +13,11 @@ export async function GET(
     const { slug } = await params;
 
     const trimmedSlug =slug.trim();
-    console.log("slug param:", slug);
+    // console.log("slug param:", slug);
 
     const product = await Product.findOne({ slug:trimmedSlug }).populate("category");
 
-    console.log("expecting product", product);
+    // console.log("expecting product", product);
 
     if (!product) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });

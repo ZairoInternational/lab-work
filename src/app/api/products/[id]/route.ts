@@ -12,9 +12,9 @@ export async function GET(
   try {
     connectDB();
     const { id } = await params;
-    console.log(id);
+    // console.log(id);
     const product = await Product.findById(id).populate("category");
-    console.log("expecting product",product);
+    // console.log("expecting product",product);
     if (!product)
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json(product);

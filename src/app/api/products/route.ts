@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     await connectDB();
     const body = await req.json();
     const { name, slug, categorySlug, price, images,pdf, shortDescription, description, specs, inStock } = body;
-    console.log("got the body",body);
+    // console.log("got the body",body);
     // Validate required fields
     if (!name || !slug || !categorySlug) {
       return NextResponse.json(
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log("validated name slug category slug");
+    // console.log("validated name slug category slug");
 
     // Find category by slug
     const category = await Category.findOne({ slug: categorySlug });
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Category not found" }, { status: 404 });
     }
 
-    console.log("found category");
+    // console.log("found category");
 
     // Create product
     const product = await Product.create({

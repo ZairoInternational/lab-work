@@ -37,7 +37,7 @@ export default async function CategoryPage({ params }: Props) {
   const products = await ProductModel.find({ category: category._id })
     .lean<Product[]>(); 
 
-    console.log("Products",products)
+    // console.log("Products",products)
   return (
     <main className="container mx-auto px-4 py-8">
       <h1 className="text-2xl lg:text-3xl font-semibold mb-6">
