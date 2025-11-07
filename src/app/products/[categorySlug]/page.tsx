@@ -66,9 +66,9 @@ export default async function CategoryPage({ params }: Props) {
                 ) : null}
               </div>
               <div className="font-medium">{p.name}</div>
-              {typeof p.price === "number" && (
+              {/* {typeof p.price === "number" && (
                 <div className="text-blue-600 mt-1">₹{p.price}</div>
-              )}
+              )} */}
               {p.shortDescription && (
                 <p className="text-sm text-gray-600 mt-2 line-clamp-2">
                   {p.shortDescription}

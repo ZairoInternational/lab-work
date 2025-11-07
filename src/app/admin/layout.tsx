@@ -13,7 +13,7 @@ export default function AdminLayout({
 }) {
 
   const pathname = usePathname();
-  console.log("pathname",pathname);
+  // console.log("pathname",pathname);
 
   return (
     <AdminGuard>

@@ -96,7 +96,7 @@ export default function EditProduct() {
         price: form.price ? Number(form.price) : undefined,
         images: form.images ? form.images : "",
       }
-      console.log("payload", payload)
+      // console.log("payload", payload)
       await axios.put(`/api/products/${id}`, payload)
       router.push("/admin/product")
     } catch (error) {
