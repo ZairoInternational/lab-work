@@ -1,8 +1,9 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import Link from "next/link"
 import { Menu, X, ChevronDown } from "lucide-react"
 import axios from "axios"
+
 export default function Header() {
   type Category = {
     _id: string
@@ -14,6 +15,9 @@ export default function Header() {
   const [isProductsOpen, setIsProductsOpen] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  
+  // Add ref for the dropdown
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -30,15 +34,28 @@ export default function Header() {
     fetchCategories()
   }, [])
 
+  // Add click outside handler
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsProductsOpen(false)
+      }
+    }
+
+    if (isProductsOpen) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [isProductsOpen])
+
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50  ">
       <div className="bg-blue-400 text-white py-2">
         <div className="container mx-auto px-4 flex justify-between items-center text-sm">
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <span>📧</span>
-              <span>info@peacefulqode.com</span>
-            </div>
             <div className="flex items-center space-x-2">
               <span>📍</span>
               <span>128 Near Golden Mall London Eye</span>
@@ -51,17 +68,6 @@ export default function Header() {
               <span>📞</span>
               <span>+91 9807850733</span>
             </div>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Link href="#" className="hover:text-blue-200">
-              Facebook
-            </Link>
-            <Link href="#" className="hover:text-blue-200">
-              Instagram
-            </Link>
-            <Link href="#" className="hover:text-blue-200">
-              Pinterest
-            </Link>
           </div>
         </div>
       </div>
@@ -82,9 +88,7 @@ export default function Header() {
                 About Us
               </Link>
             </div>
-            <div
-              className="relative"
-            >
+            <div className="relative" ref={dropdownRef}>
               <button
                 className="text-gray-700 hover:text-blue-600 font-medium flex items-center gap-1 transition-colors duration-200"
                 onClick={() => setIsProductsOpen(!isProductsOpen)}
@@ -141,7 +145,7 @@ export default function Header() {
 
           <div className="flex items-center space-x-4">
             <button className="p-2 bg-blue-400 text-white rounded-sm relative">
-              <Link href={"https://drive.google.com/file/d/17nWNeeKxxNTpVyfOVSzCpLOFtG4C12V2/view?pli=1"}>
+              <Link target="_blank" href={"https://drive.google.com/file/d/17nWNeeKxxNTpVyfOVSzCpLOFtG4C12V2/view?pli=1"}>
                 Catalogue
               </Link>
             </button>

@@ -216,43 +216,11 @@ export default function NewProduct() {
                   </select>
                 </div>
 
-                {/* <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Price *
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">
-                      ₹
-                    </span>
-                    <input
-                      className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
-                      placeholder="0.00"
-                      type="number"
-                      step="0.01"
-                      value={form.price}
-                      onChange={(e) =>
-                        setForm({ ...form, price: e.target.value })
-                      }
-                    />
-                  </div>
-                </div> */}
+                
               </div>
             </div>
 
-            {/* Media Section */}
-            {/* <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Photos</h3>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
-                <input
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
-                  placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg"
-                  value={form.images}
-                  onChange={(e) => setForm({ ...form, images: e.target.value })}
-                />
-                <p className="text-xs text-gray-500 mt-1">Separate multiple image URLs with commas</p>
-              </div>
-            </div> */}
+        
             <div className="border-t border-gray-200 pt-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Photos
@@ -294,11 +262,7 @@ export default function NewProduct() {
                   }}
                 />
 
-                {/* {form.pdf && (
-  <div className="mt-2 w-64 h-80 border rounded-lg overflow-hidden">
-    <embed src={form.pdf} type="application/pdf" width="100%" height="100%" />
-  </div>
-)} */}
+               
               </div>
             </div>
 
