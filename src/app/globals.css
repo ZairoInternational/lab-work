@@ -28,6 +28,30 @@
   animation: marquee 15s linear infinite;
 }
 
+@keyframes clients-marquee-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-clients-marquee-scroll {
+  animation: clients-marquee-scroll 52s linear infinite;
+}
+
+.animate-clients-marquee-scroll-reverse {
+  animation: clients-marquee-scroll 58s linear infinite reverse;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-clients-marquee-scroll,
+  .animate-clients-marquee-scroll-reverse {
+    animation: none;
+    transform: none;
+  }
+}
 
 body {
   background: var(--background);

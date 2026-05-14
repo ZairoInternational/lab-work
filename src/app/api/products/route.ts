@@ -8,17 +8,30 @@ export async function GET(req: NextRequest) {
     await connectDB();
     const { searchParams } = new URL(req.url);
     const categorySlug = searchParams.get("category");
+    const featuredOnly = searchParams.get("featured") === "true";
+
+    if (featuredOnly) {
+      const products = await Product.find({ featured: true })
+        .select("-price")
+        .populate("category", "name slug")
+        .sort({ updatedAt: -1 })
+        .limit(50);
+      return NextResponse.json(products);
+    }
 
     if (categorySlug) {
       const category = await Category.findOne({ slug: categorySlug });
       if (!category) return NextResponse.json([]);
-      const products = await Product.find({ category: category._id });
+      const products = await Product.find({ category: category._id }).select(
+        "-price"
+      );
       return NextResponse.json(products);
     }
 
     const products = await Product.find()
-  .populate("category", "name slug") // only fetch name + slug
-  .limit(100);
+      .select("-price")
+      .populate("category", "name slug") // only fetch name + slug
+      .limit(100);
     return NextResponse.json(products);
   } catch (e) {
     return NextResponse.json({ error: "Failed to fetch products" }, { status: 500 });
@@ -30,7 +43,7 @@ export async function POST(req: Request) {
   try {
     await connectDB();
     const body = await req.json();
-    const { name, slug, categorySlug, price, images,pdf, shortDescription, description, specs, inStock } = body;
+    const { name, slug, categorySlug, images,pdf, shortDescription, description, specs, inStock, featured } = body;
     // console.log("got the body",body);
     // Validate required fields
     if (!name || !slug || !categorySlug) {
@@ -55,13 +68,13 @@ export async function POST(req: Request) {
       name,
       slug,
       category: category._id,
-      price,
       images,
       pdf,
       shortDescription,
       description,
       specs,
-      inStock
+      inStock,
+      featured: Boolean(featured),
     });
 
     return NextResponse.json(product);

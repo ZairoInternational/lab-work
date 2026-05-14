@@ -2,8 +2,14 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { Document, Page } from "react-pdf";
 import Link from "next/link";
+import { AdminProductDescriptionMediaPreview } from "@/src/components/admin-product-description-media-preview";
+import { descriptionMediaUploadEndpoint } from "@/src/lib/mediaUrl";
+import { AdminSpecTableEditor } from "@/src/components/admin-spec-table-editor";
+import {
+  defaultSpecTableMeta,
+  type SpecTableMeta,
+} from "@/src/lib/specTable";
 
 interface Category {
   _id: string;
@@ -18,14 +24,18 @@ export default function NewProduct() {
     name: "",
     slug: "",
     categorySlug: "",
-    price: "",
     images: "",
     pdf: "",
     shortDescription: "",
     description: "",
+    featured: false,
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [specTable, setSpecTable] = useState<string[][] | null>(null);
+  const [specTableMeta, setSpecTableMeta] = useState<SpecTableMeta>(() =>
+    defaultSpecTableMeta()
+  );
 
   // Fetch categories
   useEffect(() => {
@@ -61,7 +71,7 @@ export default function NewProduct() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await axios.post("/api/uploadPdf", formData, {
+      const res = await axios.post(descriptionMediaUploadEndpoint(file), formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -83,9 +93,11 @@ export default function NewProduct() {
     try {
       const payload = {
         ...form,
-        price: form.price ? Number(form.price) : undefined,
         images: form.images ? form.images : "",
         pdf: form.pdf ? form.pdf : "",
+        ...(specTable && specTable.length > 0
+          ? { specs: { specTable, specTableMeta } }
+          : {}),
       };
 
       await axios.post("/api/products", payload);
@@ -216,6 +228,21 @@ export default function NewProduct() {
                   </select>
                 </div>
 
+                <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                  <input
+                    id="featured-new"
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    checked={form.featured}
+                    onChange={(e) => setForm({ ...form, featured: e.target.checked })}
+                  />
+                  <label htmlFor="featured-new" className="text-sm text-gray-700 cursor-pointer">
+                    <span className="font-medium text-gray-900">Featured on homepage</span>
+                    <span className="block text-gray-500 text-xs mt-0.5">
+                      Show in the Laboratory Solutions section on the home page
+                    </span>
+                  </label>
+                </div>
                 
               </div>
             </div>
@@ -238,32 +265,62 @@ export default function NewProduct() {
                   }}
                 />
                 {form.images && (
-                  <img
-                    src={form.images}
-                    alt="Preview"
-                    className="mt-2 w-32 rounded-lg border"
-                  />
+                  <div className="mt-4 w-full space-y-2">
+                    <p className="text-sm font-medium text-gray-700">
+                      Preview (same layout as the live product page)
+                    </p>
+                    <div className="relative w-full">
+                      <div className="aspect-square w-full bg-white rounded-2xl overflow-hidden shadow-xl border border-slate-100">
+                        <img
+                          src={form.images}
+                          alt="Preview"
+                          className="h-full w-full object-contain p-4 sm:p-6"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
 
             <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">PDF</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Product description (PDF or image)
+              </h3>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Upload Product Description PDF
+                  Upload PDF or image (shown like the main product image when it is an image)
                 </label>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="application/pdf,image/*"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) handlePdfUpload(file);
                   }}
                 />
-
-               
+                {form.pdf ? (
+                  <AdminProductDescriptionMediaPreview
+                    url={form.pdf}
+                    onRemove={() => setForm((prev) => ({ ...prev, pdf: "" }))}
+                  />
+                ) : null}
               </div>
+            </div>
+
+            <div className="border-t border-gray-200 pt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Product specifications
+              </h3>
+              <AdminSpecTableEditor
+                value={specTable}
+                onChange={(next) => {
+                  setSpecTable(next);
+                  if (!next) setSpecTableMeta(defaultSpecTableMeta());
+                }}
+                meta={specTableMeta}
+                onMetaChange={setSpecTableMeta}
+              />
             </div>
 
             {/* Description Section */}

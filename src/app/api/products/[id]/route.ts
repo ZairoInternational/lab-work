@@ -13,7 +13,9 @@ export async function GET(
     connectDB();
     const { id } = await params;
     // console.log(id);
-    const product = await Product.findById(id).populate("category");
+    const product = await Product.findById(id)
+      .select("-price")
+      .populate("category");
     // console.log("expecting product",product);
     if (!product)
       return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -32,8 +34,17 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   try {
     await connectDB();
     const {id} = await params;
-    const data = await req.json();
-    const updated = await Product.findByIdAndUpdate(id, data, { new: true });
+    const raw = await req.json();
+    const data = Object.fromEntries(
+      Object.entries(raw).filter(([, v]) => v !== undefined)
+    ) as Record<string, unknown>;
+    delete data._id;
+    delete data.price;
+    const updated = await Product.findByIdAndUpdate(
+      id,
+      { $set: data, $unset: { price: "" } },
+      { new: true, runValidators: true }
+    );
 
     if (!updated) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });

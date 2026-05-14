@@ -1,11 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { ArrowLeft, ExternalLink, FileText, Package, ShoppingBag, Sparkles } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  ChevronRight,
+  FileText,
+  Headphones,
+  Package,
+  Shield,
+} from "lucide-react";
 import axios from "axios";
 
 import CheckoutButton from "@/src/components/whatsappMessage";
-
+import {
+  defaultSpecTableMeta,
+  getSpecTableTheme,
+  parseSpecTableBundle,
+} from "@/src/lib/specTable";
 
 import { useRouter } from "next/navigation";
 
@@ -20,29 +33,51 @@ interface Product {
   name: string;
   slug: string;
   category: string | Category;
-  price?: number;
   images: string;
   pdf: string;
   shortDescription?: string;
   description?: string;
-  specs?: Record<string, string | number>;
+  specs?: Record<string, string | number> | {
+    specTable?: string[][];
+    specTableMeta?: {
+      themeId?: string;
+      moreInfoItems?: { heading: string; content: string; headingBold?: boolean }[];
+      moreInfoLines?: string[];
+      boldFirstRow?: boolean;
+      boldFirstCol?: boolean;
+      moreInfoHeading?: string;
+      moreInfoBody?: string;
+    };
+  };
   inStock?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
 
-type Props = { 
-  params: Promise<{ categorySlug: string; productSlug: string }> 
+type Props = {
+  params: Promise<{ categorySlug: string; productSlug: string }>;
 };
 
+function formatUpdatedAt(iso?: string): string | null {
+  if (!iso) return null;
+  try {
+    return new Intl.DateTimeFormat("en-IN", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }).format(new Date(iso));
+  } catch {
+    return null;
+  }
+}
+
 export default function ProductPage({ params }: Props) {
-  // const { categorySlug, productSlug } = await params;
   const router = useRouter();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-   const [categorySlug, setCategorySlug] = useState<string>("");
+  const [categorySlug, setCategorySlug] = useState<string>("");
   const [productSlug, setProductSlug] = useState<string>("");
 
   useEffect(() => {
@@ -55,7 +90,6 @@ export default function ProductPage({ params }: Props) {
   }, [params]);
 
   useEffect(() => {
-
     if (!productSlug || !categorySlug) return;
     const fetchProduct = async () => {
       try {
@@ -64,7 +98,7 @@ export default function ProductPage({ params }: Props) {
 
         const res = await axios.get<Product>(
           `${process.env.NEXT_PUBLIC_BASE_URL}/api/particularProduct/${productSlug}`,
-          { validateStatus: () => true } // prevents axios from throwing on 404
+          { validateStatus: () => true }
         );
 
         if (res.status !== 200 || !res.data) {
@@ -75,7 +109,6 @@ export default function ProductPage({ params }: Props) {
 
         const productData = res.data;
 
-        // ✅ Verify category slug matches product
         if (
           typeof productData.category === "object" &&
           productData.category.slug !== categorySlug
@@ -97,738 +130,423 @@ export default function ProductPage({ params }: Props) {
     fetchProduct();
   }, [productSlug, categorySlug]);
 
+  const specTableBundle = useMemo(
+    () =>
+      product
+        ? parseSpecTableBundle(product.specs)
+        : { rows: null as string[][] | null, meta: defaultSpecTableMeta() },
+    [product]
+  );
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/40 to-slate-100">
+        <div className="relative">
+          <div className="h-14 w-14 rounded-full border-2 border-slate-200 border-t-blue-600 animate-spin" />
+          <div className="pointer-events-none absolute inset-0 rounded-full bg-blue-500/15 blur-xl" />
+        </div>
+        <p className="mt-6 text-sm font-medium tracking-wide text-slate-600">
+          Loading product…
+        </p>
       </div>
     );
   }
 
   if (error || !product) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Product Not Found
-          </h2>
-          <p className="text-gray-600">
-            The product you're looking for doesn't exist or has been removed.
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 px-6">
+        <div className="max-w-md text-center">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-white shadow-lg ring-1 ring-slate-200/80">
+            <Package className="h-10 w-10 text-slate-400" strokeWidth={1.25} />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            {error === "Category mismatch" ? "Wrong category" : "Product not found"}
+          </h1>
+          <p className="mt-3 text-slate-600 leading-relaxed">
+            {error === "Category mismatch"
+              ? "This product is not listed under the category in the URL."
+              : "The product may have been moved or removed."}
           </p>
+          <Link
+            href="/"
+            className="mt-8 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition hover:bg-blue-700"
+          >
+            Back to home
+            <ArrowUpRight className="h-4 w-4" />
+          </Link>
         </div>
       </div>
     );
   }
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 0,
-    }).format(price);
-  };
+  const categoryName =
+    typeof product.category === "object" ? product.category.name : "Products";
+  const updatedLabel = formatUpdatedAt(product.updatedAt);
 
   return (
-    // <div className="min-h-screen bg-gray-50">
-    //   {/* Header */}
-    //   <header className="bg-white shadow-sm border-b">
-    //     <div className="container mx-auto px-4 py-4">
-    //       <button onClick={()=> router.back()} className="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
-    //         <ArrowLeft className="h-5 w-5 mr-2" />
-    //         Back to{" "}
-    //         {typeof product.category === "object"
-    //           ? product.category.name
-    //           : "Products"}
-    //       </button>
-    //     </div>
-    //   </header>
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      {/* Ambient background */}
+      <div
+        className="pointer-events-none fixed inset-0 -z-10 opacity-90"
+        aria-hidden
+      >
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_120%_80%_at_50%_-20%,rgba(59,130,246,0.12),transparent_55%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,rgba(99,102,241,0.08),transparent_40%)]" />
+      </div>
 
-    //   {/* Main Content */}
-    //   <main className="container mx-auto px-4 py-8">
-    //     <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-    //       <div className="flex justify-around">
-    //         {/* Image Section */}
-    //         <div className=" p-8">
-    //           <div className=" h-96 w-96 bg-white rounded-xl overflow-hidden shadow-md">
-    //             {product.images ? (
-    //               <img
-    //                 src={product.images}
-    //                 alt={product.name}
-    //                 className="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
-    //               />
-    //             ) : (
-    //               <div className="w-full h-full flex items-center justify-center bg-gray-200">
-    //                 <Package className="h-16 w-16 text-gray-400" />
-    //               </div>
-    //             )}
-    //           </div>
-    //         </div>
-
-    //         {/* Product Info */}
-    //         <div className="p-8 lg:p-12">
-    //           <div className="space-y-6">
-    //             {/* Header */}
-    //             <div>
-    //               <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
-    //                 {product.name}
-    //               </h1>
-    //               <CheckoutButton product={product} />
-
-    //             </div>
-
-    //             {/* Short Description */}
-    //             {product.shortDescription && (
-    //               <div className="prose max-w-none">
-    //                   <p className="prose whitespace-pre-line text-lg text-gray-600 leading-relaxed">
-    //                     {product.shortDescription}
-    //                   </p>
-    //                 </div>
-    //             )}
-
-    //           </div>
-    //         </div>
-    //       </div>
-
-    //        {/* Description */}
-    //             {product.description && (
-    //               <div className="px-8 lg:px-12 pb-8">
-    //                 <h2 className="text-xl font-semibold text-gray-900 mb-4">
-    //                   Description
-    //                 </h2>
-    //                 <div className="prose max-w-none">
-    //                   <p className="prose whitespace-pre-line text-gray-600 text-lg leading-relaxed">
-    //                     {product.description}
-    //                   </p>
-    //                 </div>
-    //               </div>
-    //             )}
-
-    //       {/* PDF Section - Full Width Horizontal */}
-    //       {product.pdf && (
-    //         <div className="px-8 lg:px-12 pb-8">
-    //           <div>
-    //             <h2 className="text-xl font-semibold text-gray-900 mb-4">
-    //               Product Specification
-    //             </h2>
-    //             <div className="border border-gray-100 flex justify-center rounded-xl overflow-hidden">
-
-    //               <a
-    //                   href={product.pdf}
-    //                   target="_blank"
-    //                   rel="noopener noreferrer"
-    //                   className="flex items-center text-blue-600 hover:text-blue-700 font-medium transition-colors"
-    //                 >
-    //                   <img
-    //                     src={product.pdf}
-    //                     alt="Product PDF Preview"
-    //                     className="h-150 w-200 items-center object-contain"
-    //                   />
-    //                 </a>
-
-    //             </div>
-    //           </div>
-    //         </div>
-    //       )}
-    //     </div>
-    //   </main>
-    // </div>
-
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50">
-      {/* Floating Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4 py-4">
+      {/* Top bar — full width */}
+      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/85 backdrop-blur-md">
+        <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-4 py-3.5 sm:px-6 lg:px-10">
           <button
+            type="button"
             onClick={() => router.back()}
-            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+            className="group inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
           >
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            Back to{" "}
-            {typeof product.category === "object"
-              ? product.category.name
-              : "Products"}
+            <ArrowLeft className="h-4 w-4 transition group-hover:-translate-x-0.5" />
+            <span className="hidden sm:inline">Back</span>
           </button>
+
+          <nav
+            className="hidden min-w-0 flex-1 items-center justify-end gap-1 text-xs font-medium text-slate-500 sm:flex sm:text-sm"
+            aria-label="Breadcrumb"
+          >
+            <Link href="/" className="truncate hover:text-blue-600">
+              Home
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-50" />
+            <Link
+              href={`/products/${categorySlug}`}
+              className="truncate hover:text-blue-600"
+            >
+              {categoryName}
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-50" />
+            <span className="truncate text-slate-800">{product.name}</span>
+          </nav>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
-        {/* Product Card */}
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100">
-          {/* Hero Section - Image & Info */}
-          <div className="grid lg:grid-cols-2 gap-0">
-            {/* Image Gallery Section */}
-            <div className="relative  p-6 sm:p-8 lg:p-12 flex items-center justify-center">
-              {/* <div className="absolute top-4 right-4">
-                {product.inStock !== false && (
-                  <span className="inline-flex items-center px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full text-sm font-semibold shadow-sm border border-emerald-100">
-                    <Sparkles className="h-4 w-4 mr-1.5" />
-                    In Stock
-                  </span>
-                )}
-              </div> */}
+      <article>
+        {/* Hero — full bleed feel, no floating card */}
+        <section className="border-b border-slate-200/80 bg-gradient-to-b from-white to-slate-50/90">
+          <div className="mx-auto w-full max-w-[1600px] px-4 pb-16 pt-10 sm:px-6 sm:pb-20 sm:pt-14 lg:px-10 lg:pb-24 lg:pt-16 xl:px-14">
+            <div className="mb-8 flex flex-wrap items-center gap-3 sm:hidden">
+              <Link
+                href="/"
+                className="text-xs font-medium text-slate-500 hover:text-blue-600"
+              >
+                Home
+              </Link>
+              <ChevronRight className="h-3 w-3 text-slate-300" />
+              <Link
+                href={`/products/${categorySlug}`}
+                className="text-xs font-medium text-slate-500 hover:text-blue-600"
+              >
+                {categoryName}
+              </Link>
+            </div>
 
-              <div className="relative w-full max-w-lg">
-                <div className="aspect-square bg-white rounded-2xl overflow-hidden shadow-xl border border-slate-100 ">
-                  {product.images ? (
-                    <>
+            <div className="grid items-start gap-12 lg:grid-cols-12 lg:gap-16 xl:gap-20">
+              {/* Gallery */}
+              <div className="lg:col-span-7">
+                <div className="relative mx-auto max-w-2xl lg:mx-0 lg:max-w-none">
+                  <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-slate-100 shadow-[0_24px_80px_-32px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/90 sm:aspect-[5/4] lg:aspect-auto lg:min-h-[min(72vh,760px)]">
+                    {product.images ? (
                       <img
                         src={product.images}
                         alt={product.name}
-                        className={`w-full h-full object-contain p-6  `}
+                        className="h-full w-full object-contain p-6 sm:p-8 lg:p-12"
                       />
-                    </>
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-50">
-                      <Package className="h-20 w-20 text-slate-300" />
-                    </div>
-                  )}
-                </div>
-
-                {/* Decorative Elements */}
-                <div className="absolute -top-4 -left-4 w-24 h-24 bg-blue-200 rounded-full opacity-20 blur-2xl"></div>
-                <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-purple-200 rounded-full opacity-20 blur-2xl"></div>
-              </div>
-            </div>
-
-            {/* Product Details Section */}
-            <div className="p-6 sm:p-8 lg:p-12 flex flex-col justify-center">
-              <div className="space-y-6 lg:space-y-8">
-                {/* Category Badge */}
-                {typeof product.category === "object" && (
-                  <div className="inline-flex">
-                    <span className="px-4 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-100">
-                      {product.category.name}
-                    </span>
-                  </div>
-                )}
-
-                {/* Product Name */}
-                <div>
-                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 leading-tight mb-4">
-                    {product.name}
-                  </h1>
-
-                  {/* Price */}
-                  {/* {product.price && (
-                    <div className="inline-flex items-baseline space-x-2">
-                      <span className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
-                        {formatPrice(product.price)}
-                      </span>
-                      <span className="text-slate-500 text-lg">+ GST</span>
-                    </div>
-                  )} */}
-                </div>
-
-                {/* Short Description */}
-                {product.shortDescription && (
-                  <div className="prose prose-slate max-w-none">
-                    <p className="text-lg text-slate-600 leading-relaxed whitespace-pre-line">
-                      {product.shortDescription}
-                    </p>
-                  </div>
-                )}
-
-                {/* CTA Button */}
-                <div className="pt-4">
-                  <CheckoutButton product={product} />
-                </div>
-
-                {/* Trust Indicators */}
-                {/* <div className="pt-6 border-t border-slate-100">
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div className="space-y-1">
-                      <div className="text-2xl font-bold text-slate-900">
-                        24/7
+                    ) : (
+                      <div className="flex h-full min-h-[280px] items-center justify-center bg-gradient-to-br from-slate-100 to-slate-50">
+                        <Package
+                          className="h-24 w-24 text-slate-300"
+                          strokeWidth={1}
+                        />
                       </div>
-                      <div className="text-xs text-slate-600">Support</div>
-                    </div>
-                    <div className="space-y-1 border-x border-slate-100">
-                      <div className="text-2xl font-bold text-slate-900">
-                        100%
-                      </div>
-                      <div className="text-xs text-slate-600">Genuine</div>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="text-2xl font-bold text-slate-900">
-                        Fast
-                      </div>
-                      <div className="text-xs text-slate-600">Delivery</div>
-                    </div>
+                    )}
                   </div>
-                </div> */}
-              </div>
-            </div>
-          </div>
-
-          {/* Full Description Section */}
-          {product.description && (
-            <div className="px-6 sm:px-8 lg:px-12 py-8 lg:py-12 bg-gradient-to-br from-slate-50/50 to-blue-50/20 border-t border-slate-100">
-              <div className="max-w-4xl mx-auto">
-                <div className="flex items-center space-x-3 mb-6">
-                  <div className="bg-blue-100 rounded-xl p-2">
-                    <FileText className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
-                    Product Description
-                  </h2>
-                </div>
-
-                <div className="prose prose-slate prose-lg max-w-none">
-                  <p className="text-slate-700 leading-relaxed whitespace-pre-line text-base sm:text-lg">
-                    {product.description}
+                  <p className="mt-4 text-center text-xs text-slate-500 lg:text-left">
+                    Product imagery — click below for a formal quote or instant
+                    WhatsApp.
                   </p>
                 </div>
               </div>
-            </div>
-          )}
 
-          {/* PDF/Specification Section */}
-          {product.pdf && (
-            <div className="px-6 sm:px-8 lg:px-12 py-8 lg:py-12 border-t border-slate-100">
-              <div className="max-w-4xl mx-auto">
-                <div className="flex items-center space-x-3 mb-6">
-                  <div className="bg-emerald-100 rounded-xl p-2">
-                    <FileText className="h-6 w-6 text-emerald-600" />
-                  </div>
-                  <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
-                    Product Specification
-                  </h2>
-                </div>
-
-                <div className="bg-gradient-to-br from-slate-50 to-blue-50/30 rounded-2xl overflow-hidden border border-slate-200 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                  <a
-                    href={product.pdf}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group block relative"
-                  >
-                    <div className="relative overflow-hidden">
-                      <img
-                        src={product.pdf}
-                        alt="Product Specification"
-                        className="w-full h-auto object-contain max-h-[600px] p-4 sm:p-8 group-hover:scale-105 transition-transform duration-500"
-                      />
-
-                      {/* Hover Overlay */}
-                      {/* <div className="absolute inset-0 bg-gradient-to-t from-blue-600/90 via-blue-600/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-8">
-                        <div className="bg-white text-blue-600 px-6 py-3 rounded-xl font-semibold flex items-center space-x-2 shadow-xl transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                          <span>View Full Specification</span>
-                          <ArrowLeft className="h-5 w-5 rotate-180" />
-                        </div>
-                      </div> */}
+              {/* Copy + actions */}
+              <div className="flex flex-col lg:col-span-5">
+                <div className="space-y-6 lg:space-y-8">
+                  {typeof product.category === "object" ? (
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Link
+                        href={`/products/${categorySlug}`}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50/90 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-blue-800 transition hover:border-blue-200 hover:bg-blue-100"
+                      >
+                        {product.category.name}
+                        <ArrowUpRight className="h-3.5 w-3.5 opacity-70" />
+                      </Link>
+                      {updatedLabel ? (
+                        <span className="text-xs text-slate-500">
+                          Updated {updatedLabel}
+                        </span>
+                      ) : null}
                     </div>
-                  </a>
+                  ) : null}
+
+                  <div>
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-[2.75rem] lg:leading-[1.08] xl:text-5xl">
+                      {product.name}
+                    </h1>
+                    <div className="mt-4 h-1 w-16 rounded-full bg-gradient-to-r from-blue-600 to-indigo-500" />
+                  </div>
+
+                  {product.shortDescription ? (
+                    <p className="max-w-xl text-lg leading-relaxed text-slate-600 sm:text-xl">
+                      {product.shortDescription}
+                    </p>
+                  ) : (
+                    <p className="max-w-xl text-base leading-relaxed text-slate-500">
+                      Benchtop lab equipment — request a quote for pricing,
+                      lead time, and documentation tailored to your lab.
+                    </p>
+                  )}
+
+                  <div className="border border-slate-300 bg-slate-50/80 p-5 sm:p-6">
+                    <div className="mb-4 flex items-center gap-3 border-b border-slate-200 pb-3">
+                      <span className="h-8 w-1 shrink-0 bg-blue-600" aria-hidden />
+                      <div>
+                        <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-slate-500">
+                          Actions
+                        </p>
+                        <p className="text-sm font-semibold text-slate-900">
+                          Quote, WhatsApp, or download
+                        </p>
+                      </div>
+                    </div>
+                    <CheckoutButton product={product} />
+                  </div>
+
+                  <ul className="mt-8 grid gap-px border border-slate-300 bg-slate-300 sm:grid-cols-3">
+                    <li className="flex gap-4 bg-white p-5 sm:p-6">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center border border-slate-200 bg-slate-50 text-blue-700">
+                        <Shield className="h-5 w-5" strokeWidth={1.75} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">
+                          Lab-grade quality
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                          Equipment aligned with research and industry standards.
+                        </p>
+                      </div>
+                    </li>
+                    <li className="flex gap-4 bg-white p-5 sm:p-6">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center border border-slate-200 bg-slate-50 text-indigo-700">
+                        <FileText className="h-5 w-5" strokeWidth={1.75} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">
+                          Clear documentation
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                          Specs and support materials to support procurement.
+                        </p>
+                      </div>
+                    </li>
+                    <li className="flex gap-4 bg-white p-5 sm:p-6">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center border border-slate-200 bg-slate-50 text-sky-700">
+                        <Headphones className="h-5 w-5" strokeWidth={1.75} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">
+                          Human support
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                          Our team replies to enquiries and WhatsApp messages.
+                        </p>
+                      </div>
+                    </li>
+                  </ul>
                 </div>
               </div>
             </div>
-          )}
-        </div>
-
-        {/* Additional Info Cards */}
-        {/* <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow duration-300">
-            <div className="bg-blue-50 rounded-xl p-3 w-fit mb-4">
-              <Package className="h-6 w-6 text-blue-600" />
-            </div>
-            <h3 className="font-bold text-slate-900 mb-2">Quality Assured</h3>
-            <p className="text-slate-600 text-sm leading-relaxed">
-              All products undergo rigorous quality checks before dispatch.
-            </p>
           </div>
+        </section>
 
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow duration-300">
-            <div className="bg-emerald-50 rounded-xl p-3 w-fit mb-4">
-              <ShoppingBag className="h-6 w-6 text-emerald-600" />
+        {/* Long description */}
+        {product.description ? (
+          <section className="border-b border-slate-200/70 bg-white py-16 sm:py-20 lg:py-24">
+            <div className="mx-auto max-w-[880px] px-4 sm:px-6 lg:px-8">
+              <div className="mb-10 flex items-start gap-4">
+                <span className="mt-1 hidden h-10 w-1 shrink-0 rounded-full bg-blue-600 sm:block" />
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">
+                    Overview
+                  </p>
+                  <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                    About this product
+                  </h2>
+                </div>
+              </div>
+              <div className="prose prose-slate prose-lg max-w-none prose-p:leading-relaxed prose-p:text-slate-700">
+                <p className="whitespace-pre-line text-base leading-relaxed text-slate-700 sm:text-lg">
+                  {product.description}
+                </p>
+              </div>
             </div>
-            <h3 className="font-bold text-slate-900 mb-2">Easy Returns</h3>
-            <p className="text-slate-600 text-sm leading-relaxed">
-              Hassle-free returns within 7 days of delivery.
-            </p>
-          </div>
+          </section>
+        ) : null}
 
-          <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow duration-300 sm:col-span-2 lg:col-span-1">
-            <div className="bg-purple-50 rounded-xl p-3 w-fit mb-4">
-              <Sparkles className="h-6 w-6 text-purple-600" />
+        {/* Specifications table */}
+        {specTableBundle.rows && specTableBundle.rows.length > 0
+          ? (() => {
+              const theme = getSpecTableTheme(specTableBundle.meta.themeId);
+              const meta = specTableBundle.meta;
+              const bulletItems = (meta.moreInfoItems ?? []).filter(
+                (it) => it.heading.trim() || it.content.trim()
+              );
+
+              const cellFw = (ri: number, ci: number) => {
+                if (
+                  (meta.boldFirstRow && ri === 0) ||
+                  (meta.boldFirstCol && ci === 0)
+                ) {
+                  return 700 as const;
+                }
+                return 400 as const;
+              };
+
+              return (
+                <section className="border-b border-slate-200/70 bg-slate-100/60 py-16 sm:py-20 lg:py-24">
+                  <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-10">
+                    <div className="mb-10 max-w-2xl">
+                      <p className="text-xs font-bold uppercase tracking-[0.2em] text-violet-700">
+                        Technical data
+                      </p>
+                      <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                        Specifications
+                      </h2>
+                      <p className="mt-3 text-slate-600">
+                        Key parameters for this configuration. Contact us if you
+                        need a customised build or alternate models.
+                      </p>
+                    </div>
+
+                    <div
+                      className="overflow-x-auto border bg-white shadow-sm"
+                      style={{ borderColor: theme.border }}
+                    >
+                      <table
+                        className="w-full min-w-[320px] border-collapse text-sm sm:text-base"
+                        style={{ borderColor: theme.border }}
+                      >
+                        <tbody>
+                          {specTableBundle.rows!.map((row, ri) => {
+                            const isHeader = ri === 0;
+                            const rowBg = isHeader
+                              ? theme.headerBg
+                              : ri % 2 === 1
+                                ? theme.stripeBg
+                                : theme.cellBg;
+                            const textCol = isHeader
+                              ? theme.headerText
+                              : theme.cellText;
+                            return (
+                              <tr key={ri}>
+                                {row.map((cell, ci) => (
+                                  <td
+                                    key={ci}
+                                    className="px-3 py-2.5 whitespace-pre-wrap align-top sm:px-4 sm:py-3"
+                                    style={{
+                                      background: rowBg,
+                                      color: textCol,
+                                      border: `1px solid ${theme.border}`,
+                                      fontWeight: cellFw(ri, ci),
+                                    }}
+                                  >
+                                    {cell || "—"}
+                                  </td>
+                                ))}
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+
+                      {bulletItems.length > 0 ? (
+                        <div
+                          className="border-t px-3 py-2.5 sm:px-4 sm:py-3"
+                          style={{
+                            borderColor: theme.border,
+                            background: theme.cellBg,
+                            color: theme.cellText,
+                          }}
+                        >
+                          <ul className="m-0 list-disc space-y-1.5 pl-5 text-sm leading-relaxed sm:text-base">
+                            {bulletItems.map((it, i) => {
+                              const h = it.heading.trim();
+                              const c = it.content.trim();
+                              const boldH = it.headingBold !== false;
+                              return (
+                                <li key={i} className="marker:text-current">
+                                  {h ? (
+                                    <>
+                                      <span
+                                        style={{
+                                          fontWeight: boldH ? 700 : 400,
+                                        }}
+                                      >
+                                        {h}
+                                      </span>
+                                      {c ? <span aria-hidden>: </span> : null}
+                                    </>
+                                  ) : null}
+                                  {c ? <span>{c}</span> : null}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                </section>
+              );
+            })()
+          : null}
+
+        {/* Bottom CTA band */}
+        <section className="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 py-16 text-white sm:py-20">
+          <div className="mx-auto flex max-w-[1600px] flex-col items-start justify-between gap-10 px-4 sm:flex-row sm:items-center sm:px-6 lg:px-10">
+            <div className="max-w-xl">
+              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                Need a formal quote or project support?
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-blue-100 sm:text-base">
+                Send an enquiry from our contact page or browse more equipment
+                in this category. We respond to leads and WhatsApp during
+                business hours.
+              </p>
             </div>
-            <h3 className="font-bold text-slate-900 mb-2">Expert Support</h3>
-            <p className="text-slate-600 text-sm leading-relaxed">
-              Our team is here to help with any product questions.
-            </p>
+            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+              <Link
+                href="/contact-us"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-blue-700 shadow-lg transition hover:bg-blue-50"
+              >
+                Contact us
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href={`/products/${categorySlug}`}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/40 bg-white/10 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20"
+              >
+                More in {categoryName}
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
-        </div> */}
-      </main>
+        </section>
+      </article>
     </div>
   );
 }
-
-// "use client";
-// import { useState, useEffect } from "react";
-// import { ArrowLeft, Package, FileText, Sparkles, ShoppingBag } from "lucide-react";
-// import axios from "axios";
-
-// interface Category {
-//   _id: string;
-//   name: string;
-//   slug: string;
-// }
-
-// interface Product {
-//   _id: string;
-//   name: string;
-//   slug: string;
-//   category: string | Category;
-//   price?: number;
-//   images: string;
-//   pdf: string;
-//   shortDescription?: string;
-//   description?: string;
-//   specs?: Record<string, string | number>;
-//   inStock?: boolean;
-//   createdAt?: string;
-//   updatedAt?: string;
-// }
-
-// interface ProductPageProps {
-//   categorySlug: string;
-//   productSlug: string;
-//   onBack?: () => void;
-// }
-
-// export default function ProductPage({ categorySlug, productSlug, onBack }: ProductPageProps) {
-//   const [product, setProduct] = useState<Product | null>(null);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState<string | null>(null);
-//   const [imageLoaded, setImageLoaded] = useState(false);
-
-// useEffect(() => {
-
-//     if (!productSlug || !categorySlug) return;
-//     const fetchProduct = async () => {
-//       try {
-//         setLoading(true);
-//         setError(null);
-
-//         const res = await axios.get<Product>(
-//           `${process.env.NEXT_PUBLIC_BASE_URL}/api/particularProduct/${productSlug}`,
-//           { validateStatus: () => true } // prevents axios from throwing on 404
-//         );
-
-//         if (res.status !== 200 || !res.data) {
-//           setError("Product not found");
-//           setProduct(null);
-//           return;
-//         }
-
-//         const productData = res.data;
-
-//         // ✅ Verify category slug matches product
-//         if (
-//           typeof productData.category === "object" &&
-//           productData.category.slug !== categorySlug
-//         ) {
-//           setError("Category mismatch");
-//           setProduct(null);
-//           return;
-//         }
-
-//         setProduct(productData);
-//       } catch (err) {
-//         console.error("Error fetching product:", err);
-//         setError("Failed to load product");
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchProduct();
-//   }, [productSlug, categorySlug]);
-
-//   if (loading) {
-//     return (
-//       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 flex items-center justify-center">
-//         <div className="text-center space-y-4">
-//           <div className="relative">
-//             <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-200 border-t-blue-600 mx-auto"></div>
-//             <div className="absolute inset-0 rounded-full bg-blue-50 blur-xl opacity-50"></div>
-//           </div>
-//           <p className="text-slate-600 font-medium">Loading product...</p>
-//         </div>
-//       </div>
-//     );
-//   }
-
-//   if (error || !product) {
-//     return (
-//       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 flex items-center justify-center p-4">
-//         <div className="text-center max-w-md">
-//           <div className="bg-white rounded-3xl p-12 shadow-xl border border-slate-100">
-//             <div className="bg-gradient-to-br from-slate-100 to-slate-50 rounded-2xl p-6 mb-6 inline-block">
-//               <Package className="h-16 w-16 text-slate-400" />
-//             </div>
-//             <h2 className="text-2xl font-bold text-slate-900 mb-3">
-//               Product Not Found
-//             </h2>
-//             <p className="text-slate-600 leading-relaxed mb-6">
-//               The product you're looking for doesn't exist or has been removed.
-//             </p>
-//             {onBack && (
-//               <button
-//                 onClick={onBack}
-//                 className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-all duration-200 shadow-lg shadow-blue-600/30 hover:shadow-xl hover:shadow-blue-600/40"
-//               >
-//                 <ArrowLeft className="h-5 w-5 mr-2" />
-//                 Go Back
-//               </button>
-//             )}
-//           </div>
-//         </div>
-//       </div>
-//     );
-//   }
-
-//   const formatPrice = (price: number) => {
-//     return new Intl.NumberFormat("en-IN", {
-//       style: "currency",
-//       currency: "INR",
-//       maximumFractionDigits: 0,
-//     }).format(price);
-//   };
-
-//   return (
-//     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50">
-//       {/* Floating Header */}
-//       <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/70 border-b border-slate-200/50 shadow-sm">
-//         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-//           <button
-//             onClick={onBack}
-//             className="group inline-flex items-center text-slate-600 hover:text-slate-900 transition-all duration-200 font-medium"
-//           >
-//             <div className="bg-slate-100 rounded-lg p-2 mr-3 group-hover:bg-blue-100 transition-colors duration-200">
-//               <ArrowLeft className="h-5 w-5 group-hover:text-blue-600 transition-colors duration-200" />
-//             </div>
-//             <span className="text-sm sm:text-base">
-//               Back to{" "}
-//               {typeof product.category === "object"
-//                 ? product.category.name
-//                 : "Products"}
-//             </span>
-//           </button>
-//         </div>
-//       </header>
-
-//       {/* Main Content */}
-//       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
-//         {/* Product Card */}
-//         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100">
-//           {/* Hero Section - Image & Info */}
-//           <div className="grid lg:grid-cols-2 gap-0">
-//             {/* Image Gallery Section */}
-//             <div className="relative bg-gradient-to-br from-slate-50 to-blue-50/30 p-6 sm:p-8 lg:p-12 flex items-center justify-center">
-//               <div className="absolute top-4 right-4">
-//                 {product.inStock !== false && (
-//                   <span className="inline-flex items-center px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full text-sm font-semibold shadow-sm border border-emerald-100">
-//                     <Sparkles className="h-4 w-4 mr-1.5" />
-//                     In Stock
-//                   </span>
-//                 )}
-//               </div>
-
-//               <div className="relative w-full max-w-lg">
-//                 <div className="aspect-square bg-white rounded-2xl overflow-hidden shadow-xl border border-slate-100 group">
-//                   {product.images ? (
-//                     <>
-//                       {!imageLoaded && (
-//                         <div className="absolute inset-0 flex items-center justify-center bg-slate-100 animate-pulse">
-//                           <Package className="h-16 w-16 text-slate-300" />
-//                         </div>
-//                       )}
-//                       <img
-//                         src={product.images}
-//                         alt={product.name}
-//                         className={`w-full h-full object-contain p-6 group-hover:scale-105 transition-transform duration-500 ${
-//                           imageLoaded ? 'opacity-100' : 'opacity-0'
-//                         }`}
-//                         onLoad={() => setImageLoaded(true)}
-//                       />
-//                     </>
-//                   ) : (
-//                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-50">
-//                       <Package className="h-20 w-20 text-slate-300" />
-//                     </div>
-//                   )}
-//                 </div>
-
-//                 {/* Decorative Elements */}
-//                 <div className="absolute -top-4 -left-4 w-24 h-24 bg-blue-200 rounded-full opacity-20 blur-2xl"></div>
-//                 <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-purple-200 rounded-full opacity-20 blur-2xl"></div>
-//               </div>
-//             </div>
-
-//             {/* Product Details Section */}
-//             <div className="p-6 sm:p-8 lg:p-12 flex flex-col justify-center">
-//               <div className="space-y-6 lg:space-y-8">
-//                 {/* Category Badge */}
-//                 {typeof product.category === "object" && (
-//                   <div className="inline-flex">
-//                     <span className="px-4 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-100">
-//                       {product.category.name}
-//                     </span>
-//                   </div>
-//                 )}
-
-//                 {/* Product Name */}
-//                 <div>
-//                   <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 leading-tight mb-4">
-//                     {product.name}
-//                   </h1>
-
-//                   {/* Price */}
-//                   {product.price && (
-//                     <div className="inline-flex items-baseline space-x-2">
-//                       <span className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
-//                         {formatPrice(product.price)}
-//                       </span>
-//                       <span className="text-slate-500 text-lg">+ GST</span>
-//                     </div>
-//                   )}
-//                 </div>
-
-//                 {/* Short Description */}
-//                 {product.shortDescription && (
-//                   <div className="prose prose-slate max-w-none">
-//                     <p className="text-lg text-slate-600 leading-relaxed whitespace-pre-line">
-//                       {product.shortDescription}
-//                     </p>
-//                   </div>
-//                 )}
-
-//                 {/* CTA Button */}
-//                 <div className="pt-4">
-//                   <button className="group w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold text-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-xl shadow-blue-600/30 hover:shadow-2xl hover:shadow-blue-600/40 hover:-translate-y-0.5">
-//                     <ShoppingBag className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform duration-200" />
-//                     Get Quote
-//                   </button>
-//                 </div>
-
-//                 {/* Trust Indicators */}
-//                 <div className="pt-6 border-t border-slate-100">
-//                   <div className="grid grid-cols-3 gap-4 text-center">
-//                     <div className="space-y-1">
-//                       <div className="text-2xl font-bold text-slate-900">24/7</div>
-//                       <div className="text-xs text-slate-600">Support</div>
-//                     </div>
-//                     <div className="space-y-1 border-x border-slate-100">
-//                       <div className="text-2xl font-bold text-slate-900">100%</div>
-//                       <div className="text-xs text-slate-600">Genuine</div>
-//                     </div>
-//                     <div className="space-y-1">
-//                       <div className="text-2xl font-bold text-slate-900">Fast</div>
-//                       <div className="text-xs text-slate-600">Delivery</div>
-//                     </div>
-//                   </div>
-//                 </div>
-//               </div>
-//             </div>
-//           </div>
-
-//           {/* Full Description Section */}
-//           {product.description && (
-//             <div className="px-6 sm:px-8 lg:px-12 py-8 lg:py-12 bg-gradient-to-br from-slate-50/50 to-blue-50/20 border-t border-slate-100">
-//               <div className="max-w-4xl mx-auto">
-//                 <div className="flex items-center space-x-3 mb-6">
-//                   <div className="bg-blue-100 rounded-xl p-2">
-//                     <FileText className="h-6 w-6 text-blue-600" />
-//                   </div>
-//                   <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
-//                     Product Description
-//                   </h2>
-//                 </div>
-
-//                 <div className="prose prose-slate prose-lg max-w-none">
-//                   <p className="text-slate-700 leading-relaxed whitespace-pre-line text-base sm:text-lg">
-//                     {product.description}
-//                   </p>
-//                 </div>
-//               </div>
-//             </div>
-//           )}
-
-//           {/* PDF/Specification Section */}
-//           {product.pdf && (
-//             <div className="px-6 sm:px-8 lg:px-12 py-8 lg:py-12 border-t border-slate-100">
-//               <div className="max-w-4xl mx-auto">
-//                 <div className="flex items-center space-x-3 mb-6">
-//                   <div className="bg-emerald-100 rounded-xl p-2">
-//                     <FileText className="h-6 w-6 text-emerald-600" />
-//                   </div>
-//                   <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
-//                     Product Specification
-//                   </h2>
-//                 </div>
-
-//                 <div className="bg-gradient-to-br from-slate-50 to-blue-50/30 rounded-2xl overflow-hidden border border-slate-200 shadow-lg hover:shadow-xl transition-shadow duration-300">
-//                   <a
-//                     href={product.pdf}
-//                     target="_blank"
-//                     rel="noopener noreferrer"
-//                     className="group block relative"
-//                   >
-//                     <div className="relative overflow-hidden">
-//                       <img
-//                         src={product.pdf}
-//                         alt="Product Specification"
-//                         className="w-full h-auto object-contain max-h-[600px] p-4 sm:p-8 group-hover:scale-105 transition-transform duration-500"
-//                       />
-
-//                       {/* Hover Overlay */}
-//                       <div className="absolute inset-0 bg-gradient-to-t from-blue-600/90 via-blue-600/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-8">
-//                         <div className="bg-white text-blue-600 px-6 py-3 rounded-xl font-semibold flex items-center space-x-2 shadow-xl transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-//                           <span>View Full Specification</span>
-//                           <ArrowLeft className="h-5 w-5 rotate-180" />
-//                         </div>
-//                       </div>
-//                     </div>
-//                   </a>
-//                 </div>
-//               </div>
-//             </div>
-//           )}
-//         </div>
-
-//         {/* Additional Info Cards */}
-//         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-//           <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow duration-300">
-//             <div className="bg-blue-50 rounded-xl p-3 w-fit mb-4">
-//               <Package className="h-6 w-6 text-blue-600" />
-//             </div>
-//             <h3 className="font-bold text-slate-900 mb-2">Quality Assured</h3>
-//             <p className="text-slate-600 text-sm leading-relaxed">
-//               All products undergo rigorous quality checks before dispatch.
-//             </p>
-//           </div>
-
-//           <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow duration-300">
-//             <div className="bg-emerald-50 rounded-xl p-3 w-fit mb-4">
-//               <ShoppingBag className="h-6 w-6 text-emerald-600" />
-//             </div>
-//             <h3 className="font-bold text-slate-900 mb-2">Easy Returns</h3>
-//             <p className="text-slate-600 text-sm leading-relaxed">
-//               Hassle-free returns within 7 days of delivery.
-//             </p>
-//           </div>
-
-//           <div className="bg-white rounded-2xl p-6 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow duration-300 sm:col-span-2 lg:col-span-1">
-//             <div className="bg-purple-50 rounded-xl p-3 w-fit mb-4">
-//               <Sparkles className="h-6 w-6 text-purple-600" />
-//             </div>
-//             <h3 className="font-bold text-slate-900 mb-2">Expert Support</h3>
-//             <p className="text-slate-600 text-sm leading-relaxed">
-//               Our team is here to help with any product questions.
-//             </p>
-//           </div>
-//         </div>
-//       </main>
-//     </div>
-//   );
-// }

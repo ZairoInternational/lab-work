@@ -3,8 +3,40 @@ import type React from "react"
 import Link from "next/link"
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+
 export default function AdminDashboard() {
     const router = useRouter();
+    const token = useMemo(() => (typeof window !== "undefined" ? localStorage.getItem("admin_token") : null), []);
+    const [productCount, setProductCount] = useState<number | null>(null);
+    const [categoryCount, setCategoryCount] = useState<number | null>(null);
+    const [statsError, setStatsError] = useState<string | null>(null);
+
+    useEffect(() => {
+      if (!token) return;
+      let cancelled = false;
+      (async () => {
+        try {
+          const res = await axios.get<{ success: boolean; data?: { productCount: number; categoryCount: number }; message?: string }>(
+            "/api/admin/stats",
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (cancelled) return;
+          if (res.data.success && res.data.data) {
+            setProductCount(res.data.data.productCount);
+            setCategoryCount(res.data.data.categoryCount);
+            setStatsError(null);
+          } else {
+            setStatsError(res.data.message ?? "Could not load stats");
+          }
+        } catch {
+          if (!cancelled) setStatsError("Could not load stats");
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [token]);
 
      const handleLogout = async () => {
     localStorage.removeItem("admin_token");
@@ -24,18 +56,21 @@ export default function AdminDashboard() {
       </div>
      </div>
 
+      {statsError && (
+        <p className="mb-4 text-sm text-red-600" role="alert">
+          {statsError}
+        </p>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
         <StatsCard
           title="Total Products"
-          value="1,234"
-          change="+12%"
+          value={productCount === null ? "—" : productCount.toLocaleString()}
           icon={<ProductStatsIcon />}
-          description="Active products"
+          description="Products in database"
         />
         <StatsCard
           title="Categories"
-          value="56"
-          change="+3%"
+          value={categoryCount === null ? "—" : categoryCount.toLocaleString()}
           icon={<CategoryStatsIcon />}
           description="Product categories"
         />
@@ -111,13 +146,11 @@ export default function AdminDashboard() {
 function StatsCard({
   title,
   value,
-  change,
   icon,
   description,
 }: {
   title: string
   value: string
-  change: string
   icon: React.ReactNode
   description: string
 }) {

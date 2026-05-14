@@ -15,7 +15,9 @@ export async function GET(
     const trimmedSlug =slug.trim();
     // console.log("slug param:", slug);
 
-    const product = await Product.findOne({ slug:trimmedSlug }).populate("category");
+    const product = await Product.findOne({ slug: trimmedSlug })
+      .select("-price")
+      .populate("category");
 
     // console.log("expecting product", product);
 

@@ -5,7 +5,6 @@ const ProductSchema = new Schema(
     name: { type: String, required: true },
     slug: { type: String, required: true, unique: true }, // e.g. "trinocular-xyz"
     category: { type: Schema.Types.ObjectId, ref: "Category", required: true },
-    price: { type: Number, default: 0 },
     images: { type: String, default: null },
     pdf: { type: String, default: null },
 
@@ -13,6 +12,7 @@ const ProductSchema = new Schema(
     description: { type: String },
     specs: { type: Schema.Types.Mixed }, // key-value spec table
     inStock: { type: Boolean, default: true },
+    featured: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

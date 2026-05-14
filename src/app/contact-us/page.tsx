@@ -1,170 +1,225 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
+import { useState } from "react";
+import axios from "axios";
 
-export default function ContactSection() {
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    appointmentType: 'Consultation',
-    preferredDoctor: 'Dr. David Brown',
-    preferredDate: '',
-    preferredTime: ''
-  })
+type FormState = {
+  name: string;
+  phone: string;
+  email: string;
+  companyName: string;
+  productName: string;
+  note: string;
+};
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // console.log('Form submitted:', formData)
-  }
+const initial: FormState = {
+  name: "",
+  phone: "",
+  email: "",
+  companyName: "",
+  productName: "",
+  note: "",
+};
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }))
-  }
+export default function ContactUsPage() {
+  const [formData, setFormData] = useState<FormState>(initial);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState<{ type: "ok" | "warn" | "err"; text: string } | null>(null);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setMessage(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setMessage(null);
+    try {
+      const res = await axios.post("/api/contact-lead", formData);
+      if (res.data?.success) {
+        setFormData(initial);
+        if (res.data.emailSent) {
+          setMessage({ type: "ok", text: "Thank you — your message was sent and our team will get back to you soon." });
+        } else {
+          setMessage({
+            type: "warn",
+            text:
+              "Your enquiry was saved. Email was not sent — add MAIL_SENDER_EMAIL and MAIL_SENDER_APP_PASSWORD to .env.local (app password for the sender mailbox). Your details are still saved.",
+          });
+        }
+      } else {
+        setMessage({ type: "err", text: res.data?.message || "Something went wrong." });
+      }
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setMessage({ type: "err", text: err.response?.data?.message || "Could not submit. Please try again." });
+      } else {
+        setMessage({ type: "err", text: "Could not submit. Please try again." });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="bg-gray-50 py-20">
       <div className="container mx-auto px-4">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Left Content */}
+        <div className="grid items-center gap-12 lg:grid-cols-2">
           <div>
-            <span className="text-blue-600 font-semibold text-sm uppercase tracking-wider">Contact Us</span>
-            <h2 className="text-4xl font-bold text-gray-900 mt-4 mb-6">
-              Contact Us Get your free estimate!
-            </h2>
-            <p className="text-gray-600 mb-8 leading-relaxed">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis congue, diam ut hendrerit elementum, 
-              dolor metus eleifend erat, vitae scelerisque massa justo non dolor. Cras in pulvinar augue. 
-              Donec at consequat dui.
+            <span className="text-sm font-semibold uppercase tracking-wider text-blue-600">Contact us</span>
+            <h1 className="mt-4 text-4xl font-bold text-gray-900">We&apos;d love to hear from you</h1>
+            <p className="mt-6 leading-relaxed text-gray-600">
+              Tell us about your lab, your company, and the product you are interested in. A member of the Benchtop
+              Equipment team will respond using the details you provide.
             </p>
-            <img 
-              src="https://images.unsplash.com/photo-1579684288538-c76a2fab9617?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxjb2xsZWN0aW9uLXBhZ2V8M3xFQWFwVXNnbFFsY3x8ZW58MHx8fHx8" 
-              alt="Contact Us"
-              className="rounded-lg shadow-lg w-full max-w-md"
+            <img
+              src="/assets/laboratory research.png"
+              alt="Laboratory consultation"
+              className="mt-8 w-full max-w-md rounded-lg shadow-lg"
             />
           </div>
 
-          {/* Right Form */}
           <div>
-            <div className="bg-white rounded-lg shadow-lg p-8">
-              <h3 className="text-2xl font-semibold text-gray-900 mb-6">Our Team Will Respond</h3>
-              
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
+            <div className="rounded-lg bg-white p-8 shadow-lg">
+              <h2 className="mb-6 text-2xl font-semibold text-gray-900">Send an enquiry</h2>
+
+              {message ? (
+                <div
+                  className={`mb-6 rounded-lg px-4 py-3 text-sm ${
+                    message.type === "ok"
+                      ? "bg-green-50 text-green-800"
+                      : message.type === "warn"
+                        ? "bg-amber-50 text-amber-900"
+                        : "bg-red-50 text-red-800"
+                  }`}
+                >
+                  {message.text}
+                </div>
+              ) : null}
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div>
+                  <label htmlFor="name" className="mb-2 block text-sm font-medium text-gray-700">
+                    Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                    autoComplete="name"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    placeholder="Your full name"
+                  />
+                </div>
+
+                <div className="grid gap-5 sm:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Your Name *</label>
+                    <label htmlFor="phone" className="mb-2 block text-sm font-medium text-gray-700">
+                      Phone no. <span className="text-red-500">*</span>
+                    </label>
                     <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      placeholder="Ex. John Doe"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
-                    <input
-                      type="tel"
+                      id="phone"
                       name="phone"
+                      type="tel"
                       value={formData.phone}
                       onChange={handleChange}
-                      placeholder="Enter Phone Number"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
+                      autoComplete="tel"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                      placeholder="+91 …"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="email" className="mb-2 block text-sm font-medium text-gray-700">
+                      Email <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                      autoComplete="email"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                      placeholder="you@company.com"
                     />
                   </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Type of Appointment *</label>
-                    <select
-                      name="appointmentType"
-                      value={formData.appointmentType}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    >
-                      <option value="Consultation">Consultation</option>
-                      <option value="Testing">Testing</option>
-                      <option value="Research">Research</option>
-                      <option value="Analysis">Analysis</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Scientist *</label>
-                    <select
-                      name="preferredDoctor"
-                      value={formData.preferredDoctor}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    >
-                      <option value="Dr. David Brown">Dr. David Brown</option>
-                      <option value="Dr. Sarah Smith">Dr. Sarah Smith</option>
-                      <option value="Dr. Michael Lee">Dr. Michael Lee</option>
-                    </select>
-                  </div>
+                <div>
+                  <label htmlFor="companyName" className="mb-2 block text-sm font-medium text-gray-700">
+                    Company name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="companyName"
+                    name="companyName"
+                    type="text"
+                    value={formData.companyName}
+                    onChange={handleChange}
+                    required
+                    autoComplete="organization"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    placeholder="Organization or institute"
+                  />
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Date *</label>
-                    <input
-                      type="date"
-                      name="preferredDate"
-                      value={formData.preferredDate}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Time *</label>
-                    <input
-                      type="time"
-                      name="preferredTime"
-                      value={formData.preferredTime}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
+                <div>
+                  <label htmlFor="productName" className="mb-2 block text-sm font-medium text-gray-700">
+                    Product name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="productName"
+                    name="productName"
+                    type="text"
+                    value={formData.productName}
+                    onChange={handleChange}
+                    required
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    placeholder="Equipment or model you are interested in"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="note" className="mb-2 block text-sm font-medium text-gray-700">
+                    Note
+                  </label>
+                  <textarea
+                    id="note"
+                    name="note"
+                    value={formData.note}
+                    onChange={handleChange}
+                    rows={4}
+                    className="w-full resize-y rounded-lg border border-gray-300 px-4 py-3 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    placeholder="Requirements, quantity, timeline, or other details (optional)"
+                  />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium transition-colors duration-300 flex items-center justify-center space-x-2"
+                  disabled={isSubmitting}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-8 py-3 font-medium text-white transition-colors duration-300 hover:bg-blue-700 disabled:opacity-60"
                 >
-                  <span>Send Message</span>
-                  <span>→</span>
+                  <span>{isSubmitting ? "Sending…" : "Send message"}</span>
+                  {!isSubmitting ? <span aria-hidden>→</span> : null}
                 </button>
               </form>
             </div>
 
-            {/* Stats Section */}
-            <div className="mt-8 bg-blue-600 text-white rounded-lg p-8">
-              <h3 className="text-2xl font-semibold mb-6 text-center">
-                Pioneering Laboratory Services for a Better Future
-              </h3>
-              <div className="grid grid-cols-2 gap-8 text-center">
-                <div>
-                  <div className="text-3xl font-bold mb-2">1100+</div>
-                  <div className="text-blue-200">Research Process</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-bold mb-2">200*</div>
-                  <div className="text-blue-200">Concept to Discovery</div>
-                </div>
-              </div>
+            <div className="mt-8 rounded-lg bg-blue-600 p-8 text-white">
+              <h3 className="mb-6 text-center text-2xl font-semibold">Supporting labs across research & industry</h3>
+              <p className="text-center text-sm text-blue-100">
+                Quality equipment, clear documentation, and responsive support from enquiry to delivery.
+              </p>
             </div>
           </div>
         </div>
       </div>
     </section>
-  )
+  );
 }

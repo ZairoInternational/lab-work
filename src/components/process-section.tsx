@@ -4,27 +4,30 @@ const steps = [
   {
     id: 1,
     number: "01",
-    title: "Describes Project",
-    description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
+    title: "Consult & specify",
+    description:
+      "We review your application, workspace, and compliance needs so the right benchtop configuration, accessories, and documentation are defined before anything is built.",
     icon: Microscope,
-    image: "https://images.pexels.com/photos/356040/pexels-photo-356040.jpeg"
+    image: "https://images.pexels.com/photos/356040/pexels-photo-356040.jpeg",
   },
   {
     id: 2,
-    number: "02", 
-    title: "Testing Begins",
-    description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
+    number: "02",
+    title: "Build & validate",
+    description:
+      "Units are assembled and checked on stringent parameters—so performance, safety, and reliability are verified long before the product leaves our facility.",
     icon: Hospital,
-    image: "https://images.pexels.com/photos/256262/pexels-photo-256262.jpeg"
+    image: "https://images.pexels.com/photos/256262/pexels-photo-256262.jpeg",
   },
   {
     id: 3,
     number: "03",
-    title: "Reports Delivered",
-    description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
+    title: "Deliver & support",
+    description:
+      "We coordinate careful packing and shipment, then stay available for installation guidance, validation support, and the service relationship that keeps your lab running smoothly.",
     icon: Activity,
-    image: "https://images.pexels.com/photos/2280549/pexels-photo-2280549.jpeg"
-  }
+    image: "https://images.pexels.com/photos/2280549/pexels-photo-2280549.jpeg",
+  },
 ]
 
 export default function ProcessSection() {
@@ -32,10 +35,17 @@ export default function ProcessSection() {
     <section className="py-20 bg-white">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
-          <span className="text-blue-600 font-semibold text-sm uppercase tracking-wider">Reliable Research</span>
+          <span className="text-blue-600 font-semibold text-sm uppercase tracking-wider">
+            How we work with you
+          </span>
           <h2 className="text-4xl font-bold text-gray-900 mt-4">
-            Turning Ideas into Discoveries
+            From specification to a dependable benchtop
           </h2>
+          <p className="text-gray-600 max-w-2xl mx-auto mt-4 text-lg leading-relaxed">
+            Benchtop Equipment Inc. focuses on clear requirements, rigorous in-house checks, and
+            accountable delivery—so your team spends less time chasing issues and more time on
+            research and production.
+          </p>
         </div>
 
         <div className="max-w-4xl mx-auto">
@@ -44,7 +54,7 @@ export default function ProcessSection() {
             <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-blue-200 transform -translate-y-1/2 hidden lg:block" />
             
             <div className="grid lg:grid-cols-3 gap-8">
-              {steps.map((step, index) => {
+              {steps.map((step) => {
                 const IconComponent = step.icon
                 return (
                   <div key={step.id} className="relative">
@@ -64,7 +74,7 @@ export default function ProcessSection() {
                       </div>
                       
                       <h3 className="text-xl font-semibold text-gray-900 mb-3">{step.title}</h3>
-                      <p className="text-gray-600 text-sm">{step.description}</p>
+                      <p className="text-gray-600 text-sm leading-relaxed">{step.description}</p>
                       
                       
                     </div>

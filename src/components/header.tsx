@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { Menu, X, ChevronDown } from "lucide-react"
 import axios from "axios"
@@ -11,13 +11,35 @@ export default function Header() {
     slug: string
   }
 
+  type ContactInfo = {
+    address: string
+    phone1: string
+    phone2: string
+  }
+
+  type SearchResult = {
+    categories: { name: string; slug: string }[]
+    products: { name: string; slug: string; category: { name: string; slug: string } }[]
+  }
+
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isProductsOpen, setIsProductsOpen] = useState(false)
+  const [isMobileProductsOpen, setIsMobileProductsOpen] = useState(false)
+  const [desktopProductsOpen, setDesktopProductsOpen] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [contactInfo, setContactInfo] = useState<ContactInfo>({
+    address: "128 Near Golden Mall London Eye",
+    phone1: "+91 9956499800",
+    phone2: "+91 9807850733",
+  })
+  const [searchQ, setSearchQ] = useState("")
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [searchResults, setSearchResults] = useState<SearchResult>({ categories: [], products: [] })
   
-  // Add ref for the dropdown
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const searchRef = useRef<HTMLDivElement>(null)
+  const searchDebounceRef = useRef<number | null>(null)
+  const searchQTrimmed = useMemo(() => searchQ.trim(), [searchQ])
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -34,22 +56,52 @@ export default function Header() {
     fetchCategories()
   }, [])
 
-  // Add click outside handler
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsProductsOpen(false)
+    const fetchContactInfo = async () => {
+      try {
+        const res = await axios.get("/api/contact-info")
+        if (res?.data) setContactInfo(res.data)
+      } catch (error) {
+        // keep defaults on failure
       }
     }
+    fetchContactInfo()
+  }, [])
 
-    if (isProductsOpen) {
-      document.addEventListener("mousedown", handleClickOutside)
+  useEffect(() => {
+    const onDocMouseDown = (event: MouseEvent) => {
+      const t = event.target as Node
+      if (searchRef.current && !searchRef.current.contains(t)) {
+        setSearchOpen(false)
+      }
     }
+    document.addEventListener("mousedown", onDocMouseDown)
+    return () => document.removeEventListener("mousedown", onDocMouseDown)
+  }, [])
+
+  useEffect(() => {
+    if (!searchQTrimmed) {
+      setSearchResults({ categories: [], products: [] })
+      return
+    }
+
+    if (searchDebounceRef.current) window.clearTimeout(searchDebounceRef.current)
+    searchDebounceRef.current = window.setTimeout(async () => {
+      try {
+        setSearchLoading(true)
+        const res = await axios.get("/api/search", { params: { q: searchQTrimmed } })
+        setSearchResults(res.data ?? { categories: [], products: [] })
+      } catch {
+        setSearchResults({ categories: [], products: [] })
+      } finally {
+        setSearchLoading(false)
+      }
+    }, 250)
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
+      if (searchDebounceRef.current) window.clearTimeout(searchDebounceRef.current)
     }
-  }, [isProductsOpen])
+  }, [searchQTrimmed])
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50  ">
@@ -58,15 +110,15 @@ export default function Header() {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <span>📍</span>
-              <span>128 Near Golden Mall London Eye</span>
+              <span>{contactInfo.address}</span>
             </div>
             <div className="flex items-center space-x-2">
               <span>📞</span>
-              <span>+91 9956499800</span>
+              <span>{contactInfo.phone1}</span>
             </div>
             <div className="flex items-center space-x-2">
               <span>📞</span>
-              <span>+91 9807850733</span>
+              <span>{contactInfo.phone2}</span>
             </div>
           </div>
         </div>
@@ -88,50 +140,67 @@ export default function Header() {
                 About Us
               </Link>
             </div>
-            <div className="relative" ref={dropdownRef}>
-              <button
-                className="text-gray-700 hover:text-blue-600 font-medium flex items-center gap-1 transition-colors duration-200"
-                onClick={() => setIsProductsOpen(!isProductsOpen)}
+            <div
+              className="relative hidden lg:block"
+              onMouseEnter={() => setDesktopProductsOpen(true)}
+              onMouseLeave={() => setDesktopProductsOpen(false)}
+            >
+              <div
+                className={`flex cursor-default select-none items-center gap-1 py-2 font-medium transition-colors duration-200 ${
+                  desktopProductsOpen ? "text-blue-600" : "text-gray-700"
+                }`}
+                aria-haspopup="menu"
+                aria-expanded={desktopProductsOpen}
+                aria-label="Products menu"
               >
                 Products
                 <ChevronDown
-                  className={`w-4 h-4 transition-transform duration-200 ${isProductsOpen ? "rotate-180" : ""}`}
+                  className={`h-4 w-4 shrink-0 text-gray-500 transition-transform duration-200 ${
+                    desktopProductsOpen ? "rotate-180" : ""
+                  }`}
                 />
-              </button>
-
-              {isProductsOpen && (
-                <div className="absolute top-full left-0 bg-white shadow-xl border border-gray-200 rounded-lg mt-2 w-64 py-2 z-50 animate-in fade-in-0 zoom-in-95 duration-200">
+              </div>
+              <div
+                className={`absolute left-0 top-full z-50 w-64 pt-2 transition-all duration-150 ease-out ${
+                  desktopProductsOpen
+                    ? "pointer-events-auto visible translate-y-0 opacity-100"
+                    : "pointer-events-none invisible -translate-y-1 opacity-0"
+                }`}
+              >
+                <div
+                  role="menu"
+                  aria-label="Product categories"
+                  className="rounded-lg border border-gray-200 bg-white py-2 shadow-xl"
+                >
                   {isLoading ? (
-                    <div className="px-4 py-3 text-gray-500 text-center">
+                    <div className="px-4 py-3 text-center text-gray-500">
                       <div className="flex items-center justify-center gap-2">
-                        <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-400 border-t-transparent" />
                         Loading categories...
                       </div>
                     </div>
                   ) : categories.length > 0 ? (
                     <>
-                      <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">
+                      <div className="border-b border-gray-100 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
                         Product Categories
                       </div>
-                      {categories.map((cat, index) => (
+                      {categories.map((cat) => (
                         <Link
                           key={cat._id}
                           href={`/products/${cat.slug}`}
-                          className="block px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-150 border-l-2 border-transparent hover:border-blue-400"
-                          onClick={() => setIsProductsOpen(false)}
+                          role="menuitem"
+                          className="flex min-h-[3rem] w-full items-center justify-between gap-3 border-l-2 border-transparent px-4 py-3 text-gray-700 transition-colors duration-150 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600"
                         >
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">{cat.name}</span>
-                            <ChevronDown className="w-3 h-3 -rotate-90 text-gray-400" />
-                          </div>
+                          <span className="font-medium">{cat.name}</span>
+                          <ChevronDown className="h-3 w-3 shrink-0 -rotate-90 text-gray-400" aria-hidden />
                         </Link>
                       ))}
                     </>
                   ) : (
-                    <div className="px-4 py-3 text-gray-500 text-center">No categories available</div>
+                    <div className="px-4 py-3 text-center text-gray-500">No categories available</div>
                   )}
                 </div>
-              )}
+              </div>
             </div>
             <div className="relative group">
               <Link href="/certificates" className="text-gray-700 hover:text-blue-600 font-medium">
@@ -143,14 +212,94 @@ export default function Header() {
             </Link>
           </nav>
 
+          <div className="hidden lg:block w-full max-w-md mx-6" ref={searchRef}>
+            <div className="relative">
+              <input
+                value={searchQ}
+                onChange={(e) => {
+                  setSearchQ(e.target.value)
+                  setSearchOpen(true)
+                }}
+                onFocus={() => setSearchOpen(true)}
+                placeholder="Search products or categories…"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+              />
+
+              {searchOpen && searchQTrimmed ? (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden z-50">
+                  {searchLoading ? (
+                    <div className="px-4 py-3 text-sm text-gray-600">Searching…</div>
+                  ) : (
+                    <div className="max-h-80 overflow-auto">
+                      {searchResults.categories.length === 0 && searchResults.products.length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-gray-600">No results.</div>
+                      ) : null}
+
+                      {searchResults.categories.length ? (
+                        <div className="py-2">
+                          <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Categories
+                          </div>
+                          {searchResults.categories.map((c) => (
+                            <Link
+                              key={`c-${c.slug}`}
+                              href={`/products/${c.slug}`}
+                              className="flex min-h-[2.75rem] w-full items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                              onClick={() => setSearchOpen(false)}
+                            >
+                              {c.name}
+                            </Link>
+                          ))}
+                        </div>
+                      ) : null}
+
+                      {searchResults.products.length ? (
+                        <div className="py-2 border-t border-gray-100">
+                          <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Products
+                          </div>
+                          {searchResults.products.map((p) => (
+                            <Link
+                              key={`p-${p.category.slug}-${p.slug}`}
+                              href={`/products/${p.category.slug}/${p.slug}`}
+                              className="flex min-h-[2.75rem] w-full items-center justify-between gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700"
+                              onClick={() => setSearchOpen(false)}
+                            >
+                              <span className="font-medium">{p.name}</span>
+                              <span className="shrink-0 text-xs text-gray-500">{p.category.name}</span>
+                            </Link>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+              ) : null}
+            </div>
+          </div>
+
           <div className="flex items-center space-x-4">
-            <button className="p-2 bg-blue-400 text-white rounded-sm relative">
-              <Link target="_blank" href={"https://drive.google.com/file/d/17nWNeeKxxNTpVyfOVSzCpLOFtG4C12V2/view?pli=1"}>
-                Catalogue
-              </Link>
-            </button>
-            <button className="lg:hidden p-2 hover:bg-gray-100 rounded-full" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            <Link
+              target="_blank"
+              rel="noopener noreferrer"
+              href="https://drive.google.com/file/d/17nWNeeKxxNTpVyfOVSzCpLOFtG4C12V2/view?pli=1"
+              className="inline-flex items-center justify-center rounded-sm bg-blue-400 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-500"
+            >
+              Catalogue
+            </Link>
+            <button
+              type="button"
+              className="rounded-full p-2 hover:bg-gray-100 lg:hidden"
+              aria-expanded={isMenuOpen}
+              aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+              onClick={() => {
+                setIsMenuOpen((open) => {
+                  if (open) setIsMobileProductsOpen(false)
+                  return !open
+                })
+              }}
+            >
+              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
         </div>
@@ -168,26 +317,28 @@ export default function Header() {
               {/* Mobile Products Dropdown */}
               <div className="space-y-2">
                 <button
-                  className="text-gray-700 hover:text-blue-600 font-medium flex items-center justify-between w-full"
-                  onClick={() => setIsProductsOpen(!isProductsOpen)}
+                  type="button"
+                  className="flex w-full items-center justify-between py-2 text-left font-medium text-gray-700 hover:text-blue-600"
+                  aria-expanded={isMobileProductsOpen}
+                  onClick={() => setIsMobileProductsOpen(!isMobileProductsOpen)}
                 >
                   Products
                   <ChevronDown
-                    className={`w-4 h-4 transition-transform duration-200 ${isProductsOpen ? "rotate-180" : ""}`}
+                    className={`h-4 w-4 shrink-0 transition-transform duration-200 ${isMobileProductsOpen ? "rotate-180" : ""}`}
                   />
                 </button>
-                {isProductsOpen && (
-                  <div className="pl-4 space-y-2 border-l-2 border-blue-100">
+                {isMobileProductsOpen && (
+                  <div className="space-y-1 border-l-2 border-blue-100 pl-4">
                     {isLoading ? (
-                      <div className="text-gray-500 text-sm">Loading...</div>
+                      <div className="text-sm text-gray-500">Loading...</div>
                     ) : categories.length > 0 ? (
                       categories.map((cat) => (
                         <Link
                           key={cat._id}
                           href={`/products/${cat.slug}`}
-                          className="block text-gray-600 hover:text-blue-600 text-sm py-1"
+                          className="flex min-h-[2.75rem] w-full items-center rounded-md px-2 py-2 text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-700"
                           onClick={() => {
-                            setIsProductsOpen(false)
+                            setIsMobileProductsOpen(false)
                             setIsMenuOpen(false)
                           }}
                         >
@@ -195,7 +346,7 @@ export default function Header() {
                         </Link>
                       ))
                     ) : (
-                      <div className="text-gray-500 text-sm">No categories available</div>
+                      <div className="text-sm text-gray-500">No categories available</div>
                     )}
                   </div>
                 )}
