@@ -207,6 +207,9 @@ export default function Header() {
                 Certificates
               </Link>
             </div>
+            <Link href="/achievements" className="text-gray-700 hover:text-blue-600 font-medium">
+              Achievements
+            </Link>
             <Link href="/contact-us" className="text-gray-700 hover:text-blue-600 font-medium">
               Contact Us
             </Link>
@@ -354,6 +357,9 @@ export default function Header() {
 
               <Link href="/certificates" className="text-gray-700 hover:text-blue-600 font-medium">
                 Certificates
+              </Link>
+              <Link href="/achievements" className="text-gray-700 hover:text-blue-600 font-medium">
+                Achievements
               </Link>
               <Link href="/contact-us" className="text-gray-700 hover:text-blue-600 font-medium">
                 Contact Us

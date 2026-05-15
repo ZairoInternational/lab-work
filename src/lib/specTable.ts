@@ -1,5 +1,37 @@
+/** Maximum rows and columns allowed in a specification table. */
+export const SPEC_TABLE_MAX_ROWS = 30;
+export const SPEC_TABLE_MAX_COLS = 30;
+
 /** Max rows/columns in the insert-table hover grid (Word-style picker). */
-export const SPEC_TABLE_PICKER_MAX = 12;
+export const SPEC_TABLE_PICKER_MAX = SPEC_TABLE_MAX_ROWS;
+
+/** Clamp proposed table dimensions to the allowed maximum (minimum 1×1). */
+export function clampSpecTableSize(
+  rows: number,
+  cols: number
+): { rows: number; cols: number } {
+  return {
+    rows: Math.min(Math.max(1, Math.floor(rows)), SPEC_TABLE_MAX_ROWS),
+    cols: Math.min(Math.max(1, Math.floor(cols)), SPEC_TABLE_MAX_COLS),
+  };
+}
+
+/** Trim an existing grid to at most {@link SPEC_TABLE_MAX_ROWS}×{@link SPEC_TABLE_MAX_COLS}. */
+export function clampSpecTableRows(rows: string[][] | null): string[][] | null {
+  if (!rows?.length) return rows;
+  const trimmed = rows.slice(0, SPEC_TABLE_MAX_ROWS).map((row) =>
+    Array.isArray(row)
+      ? row.slice(0, SPEC_TABLE_MAX_COLS).map((cell) => String(cell ?? ""))
+      : []
+  );
+  const cols = Math.max(0, ...trimmed.map((r) => r.length));
+  if (cols === 0) return null;
+  return trimmed.map((row) => {
+    const next = row.slice(0, cols);
+    while (next.length < cols) next.push("");
+    return next;
+  });
+}
 
 /** One bullet row under the spec table: heading (optional bold) + “: ” + content. */
 export type SpecMoreInfoItem = {
@@ -151,8 +183,9 @@ export function defaultSpecTableMeta(): SpecTableMeta {
 }
 
 export function emptySpecGrid(rows: number, cols: number): string[][] {
-  return Array.from({ length: rows }, () =>
-    Array.from({ length: cols }, () => "")
+  const { rows: r, cols: c } = clampSpecTableSize(rows, cols);
+  return Array.from({ length: r }, () =>
+    Array.from({ length: c }, () => "")
   );
 }
 
@@ -161,10 +194,9 @@ export function resizeSpecGrid(
   rows: number,
   cols: number
 ): string[][] {
-  return Array.from({ length: rows }, (_, r) =>
-    Array.from({ length: cols }, (_, c) =>
-      String(prev[r]?.[c] ?? "")
-    )
+  const { rows: r, cols: c } = clampSpecTableSize(rows, cols);
+  return Array.from({ length: r }, (_, ri) =>
+    Array.from({ length: c }, (_, ci) => String(prev[ri]?.[ci] ?? ""))
   );
 }
 
@@ -263,5 +295,5 @@ export function parseSpecTableBundle(raw: unknown): {
     }
     out.push(row.map((cell) => String(cell ?? "")));
   }
-  return { rows: out, meta };
+  return { rows: clampSpecTableRows(out), meta };
 }

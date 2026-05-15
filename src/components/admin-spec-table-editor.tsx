@@ -3,9 +3,12 @@
 import { useCallback, useState } from "react";
 import { Table2 } from "lucide-react";
 import {
+  clampSpecTableSize,
   emptySpecGrid,
   getSpecTableTheme,
   resizeSpecGrid,
+  SPEC_TABLE_MAX_COLS,
+  SPEC_TABLE_MAX_ROWS,
   SPEC_TABLE_PICKER_MAX,
   SPEC_TABLE_THEMES,
   type SpecMoreInfoItem,
@@ -51,11 +54,11 @@ export function AdminSpecTableEditor({
 
   const commitSize = useCallback(
     (rows: number, cols: number) => {
-      if (rows < 1 || cols < 1) return;
+      const { rows: r, cols: c } = clampSpecTableSize(rows, cols);
       if (hasTable && value) {
-        onChange(resizeSpecGrid(value, rows, cols));
+        onChange(resizeSpecGrid(value, r, c));
       } else {
-        onChange(emptySpecGrid(rows, cols));
+        onChange(emptySpecGrid(r, c));
       }
       closePicker();
     },
@@ -146,7 +149,8 @@ export function AdminSpecTableEditor({
 
       <p className="text-xs text-gray-600 leading-relaxed">
         Hover the grid to choose rows and columns (like Excel), then click a cell
-        to create or resize the table. Fill in the cells below.
+        to create or resize the table (maximum {SPEC_TABLE_MAX_ROWS}×{SPEC_TABLE_MAX_COLS}).
+        Fill in the cells below.
       </p>
 
       {pickerOpen && (
@@ -170,13 +174,13 @@ export function AdminSpecTableEditor({
             </button>
           </div>
           <div
-            className="inline-block select-none"
+            className="inline-block max-h-56 overflow-auto select-none rounded-md"
             onMouseLeave={() => setHover(null)}
           >
             <div
               className="grid gap-0.5 p-1 bg-slate-100 rounded-md border border-slate-200 w-fit"
               style={{
-                gridTemplateColumns: `repeat(${SPEC_TABLE_PICKER_MAX}, 14px)`,
+                gridTemplateColumns: `repeat(${SPEC_TABLE_PICKER_MAX}, 12px)`,
               }}
             >
               {Array.from({ length: SPEC_TABLE_PICKER_MAX }, (_, r) =>
@@ -187,7 +191,7 @@ export function AdminSpecTableEditor({
                     <button
                       key={`${r}-${c}`}
                       type="button"
-                      className={`h-3.5 w-3.5 rounded-sm border transition-colors ${
+                      className={`h-3 w-3 rounded-sm border transition-colors ${
                         inHover
                           ? "bg-blue-500 border-blue-600 shadow-sm"
                           : "bg-white border-slate-300 hover:border-blue-400"
