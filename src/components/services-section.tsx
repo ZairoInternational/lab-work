@@ -1,9 +1,14 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, FlaskConical, Sparkles } from "lucide-react";
 import axios from "axios";
+import { motion, useReducedMotion } from "framer-motion";
+
+const SLIDE_MS = 650;
+const AUTO_MS = 4000;
+const CARD_HEIGHT = "min-h-[340px] h-[52vh] max-h-[520px] sm:min-h-[380px] sm:max-h-[560px] lg:min-h-[420px] lg:max-h-[600px]";
 
 type CategoryRef = { _id?: string; name?: string; slug?: string };
 
@@ -21,6 +26,16 @@ function categorySlugOf(p: ApiProduct): string | null {
   return null;
 }
 
+function categoryNameOf(p: ApiProduct): string {
+  if (typeof p.category === "object" && p.category?.name) return p.category.name;
+  return "View product";
+}
+
+function productHref(p: ApiProduct): string {
+  const catSlug = categorySlugOf(p);
+  return catSlug != null ? `/products/${catSlug}/${p.slug}` : "/products";
+}
+
 function imageSrc(url: string | null | undefined): string {
   if (!url || !String(url).trim()) return "/assets/laboratory research.png";
   const u = String(url).trim();
@@ -28,11 +43,43 @@ function imageSrc(url: string | null | undefined): string {
   return u.startsWith("/") ? u : `/${u}`;
 }
 
-export default function ProductCarousel() {
+function useItemsPerView(count: number) {
+  const [itemsPerView, setItemsPerView] = useState(1);
+
+  useEffect(() => {
+    const update = () => {
+      const w = window.innerWidth;
+      let n = 1;
+      if (w >= 1536) n = 5;
+      else if (w >= 1280) n = 4;
+      else if (w >= 1024) n = 3;
+      else if (w >= 640) n = 2;
+      setItemsPerView(Math.min(n, Math.max(1, count)));
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [count]);
+
+  return itemsPerView;
+}
+
+export default function ServicesSection() {
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [animateSlide, setAnimateSlide] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
+  const reduceMotion = useReducedMotion();
+
+  const itemsPerView = useItemsPerView(products.length);
+  const count = products.length;
+
+  const loopProducts = useMemo(() => {
+    if (count === 0) return [];
+    return [...products, ...products, ...products];
+  }, [products, count]);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,173 +102,237 @@ export default function ProductCarousel() {
     };
   }, []);
 
-  const itemsPerView = useMemo(
-    () => Math.min(5, Math.max(1, products.length || 1)),
-    [products.length]
+  useEffect(() => {
+    if (count > 0) setCurrentIndex(count);
+  }, [count]);
+
+  const trackShiftPercent =
+    loopProducts.length > 0 ? (currentIndex * 100) / loopProducts.length : 0;
+
+  const logicalIndex = count > 0 ? ((currentIndex % count) + count) % count : 0;
+
+  const jumpTo = useCallback(
+    (index: number) => {
+      setAnimateSlide(false);
+      setCurrentIndex(index);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setAnimateSlide(true));
+      });
+    },
+    []
   );
 
-  const extendedProducts = useMemo(() => {
-    if (products.length === 0) return [];
-    return [...products, ...products, ...products];
-  }, [products]);
+  const goToNext = useCallback(() => {
+    if (!count || isTransitioning) return;
+    setIsTransitioning(true);
+    setCurrentIndex((prev) => prev + 1);
+  }, [count, isTransitioning]);
+
+  const goToPrevious = useCallback(() => {
+    if (!count || isTransitioning) return;
+    setIsTransitioning(true);
+    setCurrentIndex((prev) => prev - 1);
+  }, [count, isTransitioning]);
 
   useEffect(() => {
-    if (!products.length) return;
-    if (currentIndex >= products.length) setCurrentIndex(0);
-  }, [products.length, currentIndex]);
+    if (!isTransitioning || count === 0) return;
+
+    const timer = setTimeout(() => {
+      setIsTransitioning(false);
+      if (currentIndex >= count * 2) {
+        jumpTo(currentIndex - count);
+      } else if (currentIndex < count) {
+        jumpTo(currentIndex + count);
+      }
+    }, reduceMotion ? 0 : SLIDE_MS);
+
+    return () => clearTimeout(timer);
+  }, [isTransitioning, currentIndex, count, jumpTo, reduceMotion]);
+
+  const canSlide = count > itemsPerView;
 
   useEffect(() => {
-    if (products.length === 0 || isHovered) return;
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => {
-        const next = prev + 1;
-        if (next >= products.length) return 0;
-        return next;
-      });
-    }, 3000);
+    if (!canSlide || isHovered || reduceMotion || isTransitioning) return;
+    const interval = setInterval(goToNext, AUTO_MS);
     return () => clearInterval(interval);
-  }, [products.length, isHovered]);
+  }, [canSlide, isHovered, reduceMotion, isTransitioning, goToNext]);
 
-  const goToPrevious = () => {
-    if (!products.length) return;
-    setCurrentIndex((prev) => (prev === 0 ? products.length - 1 : prev - 1));
-  };
-
-  const goToNext = () => {
-    if (!products.length) return;
-    setCurrentIndex((prev) => (prev + 1) % products.length);
-  };
+  const fade = reduceMotion
+    ? {}
+    : {
+        initial: { opacity: 0, y: 16 },
+        whileInView: { opacity: 1, y: 0 },
+        viewport: { once: true, margin: "-48px" },
+        transition: { duration: 0.45, ease: [0.25, 0.1, 0.25, 1] as const },
+      };
 
   return (
-    <div className="relative py-6 sm:py-8">
-      <div className="relative container min-w-full max-w-6xl mx-auto px-4">
-        <div className="text-center mb-8 sm:mb-10">
-          <div className="inline-flex items-center gap-3 mb-4">
-            <div className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-r from-slate-600 to-slate-700 rounded-xl shadow-md">
-              <svg
-                className="w-4 h-4 sm:w-5 sm:h-5 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 9.172V5L8 4z"
-                />
-              </svg>
-            </div>
-            <div className="h-px w-12 bg-gradient-to-r from-slate-300 to-transparent" />
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent mb-2">
-            Laboratory Solutions
+    <section
+      className="relative w-full overflow-hidden py-16 sm:py-20 lg:py-24"
+      aria-labelledby="featured-products-heading"
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white via-slate-50/90 to-slate-100"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,rgba(59,130,246,0.12),transparent_55%)]"
+      />
+
+      {/* Header — contained */}
+      <div className="relative z-10 mx-auto max-w-4xl px-4 text-center sm:px-6">
+        <motion.div {...fade}>
+          <span className="inline-flex items-center gap-2 rounded-full border border-blue-200/80 bg-blue-50 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-700">
+            <Sparkles className="h-3.5 w-3.5 text-blue-500" aria-hidden />
+            Featured equipment
+          </span>
+          <h2
+            id="featured-products-heading"
+            className="mt-5 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl"
+          >
+            Laboratory{" "}
+            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              Solutions
+            </span>
           </h2>
-          <p className="text-slate-600 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
+          <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">
             Precision-engineered equipment for modern research and analysis
           </p>
-          {loadError && <p className="mt-4 text-sm text-amber-700">{loadError}</p>}
-        </div>
-
-        {products.length === 0 ? (
-          <div className="max-w-md mx-auto text-center rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-8 text-slate-600 text-sm">
-            <p className="font-medium text-slate-800">No featured products yet</p>
-            <p className="mt-2 text-sm">
-              In Admin → Products, edit a product and enable <strong>Featured on homepage</strong>, or toggle Featured in
-              the product list.
+          {loadError && (
+            <p className="mt-3 text-sm font-medium text-amber-700" role="alert">
+              {loadError}
             </p>
+          )}
+        </motion.div>
+      </div>
+
+      {products.length === 0 ? (
+        <motion.div
+          {...fade}
+          className="relative z-10 mx-auto mt-10 max-w-md rounded-2xl border border-slate-200 bg-white/80 px-6 py-8 text-center shadow-sm"
+        >
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100">
+            <FlaskConical className="h-6 w-6 text-slate-500" aria-hidden />
           </div>
-        ) : (
-          <div
-            className="relative max-w-5xl mx-auto"
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-          >
-            <div className="overflow-hidden rounded-xl backdrop-blur-sm border border-white/20 p-3 sm:p-4">
-              <div
-                className="flex transition-transform duration-700 ease-out gap-3 sm:gap-4"
-                style={{
-                  transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)`,
-                  width: `${(extendedProducts.length * 20) / itemsPerView}%`,
-                }}
+          <p className="font-semibold text-slate-900">No featured products yet</p>
+          <p className="mt-2 text-sm text-slate-600">
+            In Admin → Products, enable <strong>Featured on homepage</strong> on the items you want here.
+          </p>
+        </motion.div>
+      ) : (
+        <motion.div
+          {...fade}
+          className="relative z-10 mt-10 w-full sm:mt-12"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          {/* Full-bleed carousel */}
+          <div className="relative left-1/2 w-screen -translate-x-1/2">
+            <motion.div className="overflow-hidden">
+              <motion.div
+                className="flex"
+                animate={{ x: `-${trackShiftPercent}%` }}
+                transition={
+                  !animateSlide || reduceMotion
+                    ? { duration: 0 }
+                    : { duration: SLIDE_MS / 1000, ease: [0.25, 0.1, 0.25, 1] }
+                }
+                style={{ width: `${(loopProducts.length * 100) / itemsPerView}%` }}
               >
-                {extendedProducts.map((product, index) => {
-                  const catSlug = categorySlugOf(product);
-                  const href =
-                    catSlug != null
-                      ? `/products/${catSlug}/${product.slug}`
-                      : `/products`;
+                {loopProducts.map((product, index) => {
+                  const href = productHref(product);
                   return (
                     <div
                       key={`${product._id}-${index}`}
-                      className="group relative flex-shrink-0"
-                      style={{ width: `${100 / itemsPerView}%` }}
+                      className="shrink-0 px-2 sm:px-2.5"
+                      style={{ width: `${100 / loopProducts.length}%` }}
                     >
-                      <Link href={href} className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xl">
-                        <div className="relative h-28 sm:h-32 md:h-36 w-full rounded-xl overflow-hidden bg-white shadow-md group-hover:shadow-lg transition-all duration-500">
+                      <Link
+                        href={href}
+                        className="group block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                      >
+                        <article
+                          className={`relative overflow-hidden rounded-xl bg-slate-900 shadow-lg ring-1 ring-white/10 transition-shadow duration-300 group-hover:shadow-2xl group-hover:shadow-blue-500/15 sm:rounded-2xl ${CARD_HEIGHT}`}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={imageSrc(product.images)}
                             alt={product.name}
-                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                            loading={index < itemsPerView * 2 ? "eager" : "lazy"}
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
-                          <div className="absolute bottom-0 left-0 right-0 p-2.5 sm:p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-500">
-                            <h3 className="text-white font-semibold text-xs sm:text-sm mb-0.5 leading-snug line-clamp-2">{product.name}</h3>
-                            <p className="text-white/80 text-[11px] sm:text-xs font-medium truncate">
-                              {typeof product.category === "object" && product.category?.name
-                                ? product.category.name
-                                : "View product"}
+                          <div
+                            className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/45 to-slate-900/10"
+                            aria-hidden
+                          />
+                          <div
+                            className="absolute inset-0 bg-blue-600/0 transition-colors duration-300 group-hover:bg-blue-600/10"
+                            aria-hidden
+                          />
+                          <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6 lg:p-8">
+                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-300/90">
+                              {categoryNameOf(product)}
                             </p>
+                            <h3 className="mt-2 text-lg font-bold leading-tight text-white line-clamp-2 sm:text-xl lg:text-2xl">
+                              {product.name}
+                            </h3>
                           </div>
-                          <div className="absolute inset-0 rounded-xl ring-2 ring-slate-400/0 group-hover:ring-slate-400/25 transition-all duration-500" />
-                        </div>
+                        </article>
                       </Link>
                     </div>
                   );
                 })}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
 
-            <button
-              type="button"
-              onClick={goToPrevious}
-              className="absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 -translate-x-1 sm:-translate-x-2 w-9 h-9 sm:w-10 sm:h-10 bg-white shadow-md rounded-full flex items-center justify-center text-slate-600 hover:text-slate-800 hover:shadow-lg transition-all duration-300 group z-10"
-              aria-label="Previous slide"
-            >
-              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform duration-200" />
-            </button>
-
-            <button
-              type="button"
-              onClick={goToNext}
-              className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 translate-x-1 sm:translate-x-2 w-9 h-9 sm:w-10 sm:h-10 bg-white shadow-md rounded-full flex items-center justify-center text-slate-600 hover:text-slate-800 hover:shadow-lg transition-all duration-300 group z-10"
-              aria-label="Next slide"
-            >
-              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform duration-200" />
-            </button>
-
-            <div className="flex justify-center gap-1.5 mt-4">
-              {products.slice(0, Math.ceil(products.length / itemsPerView)).map((_, index) => (
+            {canSlide && (
+              <>
                 <button
                   type="button"
+                  onClick={goToPrevious}
+                  disabled={isTransitioning}
+                  className="absolute left-3 top-1/2 z-20 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-white/95 text-slate-800 shadow-xl backdrop-blur-sm transition-all hover:bg-white hover:text-blue-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-60 sm:left-6 sm:h-14 sm:w-14"
+                  aria-label="Previous products"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+                <button
+                  type="button"
+                  onClick={goToNext}
+                  disabled={isTransitioning}
+                  className="absolute right-3 top-1/2 z-20 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-white/95 text-slate-800 shadow-xl backdrop-blur-sm transition-all hover:bg-white hover:text-blue-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-60 sm:right-6 sm:h-14 sm:w-14"
+                  aria-label="Next products"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+              </>
+            )}
+          </div>
+
+          {canSlide && (
+            <div className="mt-8 flex justify-center gap-1.5 px-4">
+              {products.map((_, index) => (
+                <button
                   key={index}
-                  onClick={() => setCurrentIndex(index * itemsPerView)}
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                    Math.floor(currentIndex / itemsPerView) === index
-                      ? "bg-slate-800 w-8"
-                      : "bg-slate-300 hover:bg-slate-400"
+                  type="button"
+                  onClick={() => {
+                    if (isTransitioning) return;
+                    setIsTransitioning(true);
+                    setAnimateSlide(true);
+                    setCurrentIndex(count + index);
+                  }}
+                  className={`h-2 rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                    logicalIndex === index ? "w-8 bg-blue-500" : "w-2 bg-slate-300 hover:bg-slate-400"
                   }`}
-                  aria-label={`Go to slide group ${index + 1}`}
+                  aria-label={`Go to product ${index + 1}`}
+                  aria-current={logicalIndex === index ? "true" : undefined}
                 />
               ))}
             </div>
-          </div>
-        )}
-
-        <div className="pointer-events-none absolute top-1/4 right-4 w-2 h-2 bg-blue-400/15 rounded-full" />
-        <div className="pointer-events-none absolute top-1/3 left-4 w-1.5 h-1.5 bg-slate-400/20 rounded-full" />
-        <div className="pointer-events-none absolute bottom-1/4 right-1/4 w-2 h-2 bg-blue-300/10 rounded-full" />
-      </div>
-    </div>
+          )}
+        </motion.div>
+      )}
+    </section>
   );
 }

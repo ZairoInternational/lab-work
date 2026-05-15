@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 
@@ -128,24 +129,13 @@ export default function HeroSection() {
               {active.description}
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button
-                type="button"
-                className="group relative px-8 py-4 bg-blue-400 hover:bg-blue-500 text-white font-semibold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-blue-400/25 overflow-hidden"
-              >
-                <span className="absolute inset-0 bg-gradient-to-r from-blue-300 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <span className="relative flex items-center justify-center space-x-2">
-                  <span>Explore Research</span>
-                </span>
-              </button>
-
-              <button
-                type="button"
-                className="group px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-sm border-2 border-white/30 hover:border-white/50 text-white font-semibold rounded-full transition-all duration-300"
-              >
-                <span className="group-hover:text-blue-100 transition-colors duration-300">Learn More</span>
-              </button>
-            </div>
+            <Link
+              href="/contact-us"
+              className="group relative inline-flex px-8 py-4 bg-blue-400 hover:bg-blue-500 text-white font-semibold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-blue-400/25 overflow-hidden"
+            >
+              <span className="absolute inset-0 bg-gradient-to-r from-blue-300 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <span className="relative flex items-center justify-center">Contact Us</span>
+            </Link>
           </motion.div>
         </AnimatePresence>
       </div>
