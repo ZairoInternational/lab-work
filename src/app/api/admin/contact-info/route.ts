@@ -3,6 +3,12 @@ import jwt from "jsonwebtoken";
 import { connectDB } from "@/src/lib/db";
 import ContactInfo from "@/src/models/contactInfo";
 
+type ContactInfoLean = {
+  address?: string;
+  phone1?: string;
+  phone2?: string;
+};
+
 function requireAdmin(req: Request) {
   const auth = req.headers.get("authorization") || "";
   const token = auth.startsWith("Bearer ") ? auth.slice("Bearer ".length) : "";
@@ -21,7 +27,7 @@ export async function GET(req: Request) {
   if (!auth.ok) return NextResponse.json({ success: false, message: auth.message }, { status: auth.status });
 
   await connectDB();
-  const doc = await ContactInfo.findOne().sort({ updatedAt: -1 }).lean();
+  const doc = (await ContactInfo.findOne().sort({ updatedAt: -1 }).lean()) as ContactInfoLean | null;
   return NextResponse.json({
     success: true,
     data: {

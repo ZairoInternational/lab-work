@@ -17,14 +17,16 @@ function requireAdmin(req: Request) {
 
 const KEYS = ["facebook", "instagram", "twitter", "linkedin", "youtube", "github"] as const;
 
+type SocialLinksLean = Partial<Record<(typeof KEYS)[number], string>>;
+
 export async function GET(req: Request) {
   const auth = requireAdmin(req);
   if (!auth.ok) return NextResponse.json({ success: false, message: auth.message }, { status: auth.status });
 
   await connectDB();
-  const doc = await SocialLinks.findOne().sort({ updatedAt: -1 }).lean();
+  const doc = (await SocialLinks.findOne().sort({ updatedAt: -1 }).lean()) as SocialLinksLean | null;
   const data = Object.fromEntries(
-    KEYS.map((k) => [k, String((doc as Record<string, unknown>)?.[k] ?? "").trim()])
+    KEYS.map((k) => [k, String(doc?.[k] ?? "").trim()])
   ) as Record<(typeof KEYS)[number], string>;
 
   return NextResponse.json({ success: true, data });
