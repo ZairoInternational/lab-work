@@ -13,6 +13,7 @@ export async function GET() {
         description: a.description,
         photo: a.photo,
         order: a.order ?? 0,
+        createdAt: a.createdAt,
       }))
     );
   } catch {

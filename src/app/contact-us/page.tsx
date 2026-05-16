@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import axios from "axios";
+import ContactSidebar from "@/src/components/contact-sidebar";
 
 type FormState = {
   name: string;
@@ -66,20 +67,17 @@ export default function ContactUsPage() {
   return (
     <section className="bg-gray-50 py-20">
       <div className="container mx-auto px-4">
-        <div className="grid items-center gap-12 lg:grid-cols-2">
-          <div>
-            <span className="text-sm font-semibold uppercase tracking-wider text-blue-600">Contact us</span>
-            <h1 className="mt-4 text-4xl font-bold text-gray-900">We&apos;d love to hear from you</h1>
-            <p className="mt-6 leading-relaxed text-gray-600">
-              Tell us about your lab, your company, and the product you are interested in. A member of the Benchtop
-              Equipment team will respond using the details you provide.
-            </p>
-            <img
-              src="/assets/laboratory research.png"
-              alt="Laboratory consultation"
-              className="mt-8 w-full max-w-md rounded-lg shadow-lg"
-            />
-          </div>
+        <div className="mb-12 text-center lg:text-left">
+          <span className="text-sm font-semibold uppercase tracking-wider text-blue-600">Contact us</span>
+          <h1 className="mt-4 text-4xl font-bold text-gray-900">We&apos;d love to hear from you</h1>
+          <p className="mx-auto mt-4 max-w-2xl leading-relaxed text-gray-600 lg:mx-0">
+            Tell us about your lab, your company, and the product you are interested in. A member of the Benchtop
+            Equipment team will respond using the details you provide.
+          </p>
+        </div>
+
+        <div className="grid items-start gap-12 lg:grid-cols-2">
+          <ContactSidebar />
 
           <div>
             <div className="rounded-lg bg-white p-8 shadow-lg">

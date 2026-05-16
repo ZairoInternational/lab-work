@@ -97,14 +97,7 @@ export default function WhyChooseUsSection() {
                       }`} />
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-3">{service.title}</h3>
-                    <p className="text-gray-600 text-sm mb-4 leading-relaxed">{service.description}</p>
-                    <button className={`p-2 rounded-full transition-colors duration-300 ${
-                      index === activeService 
-                        ? 'bg-blue-600 ' 
-                        : 'bg-gray-200 text-gray-600 hover:bg-blue-600 hover:text-white'
-                    }`}>
-                      <span>→</span>
-                    </button>
+                    <p className="text-gray-600 text-sm leading-relaxed">{service.description}</p>
                   </div>
                 </div>
               </div>

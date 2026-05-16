@@ -28,9 +28,9 @@ export default function Header() {
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [contactInfo, setContactInfo] = useState<ContactInfo>({
-    address: "128 Near Golden Mall London Eye",
-    phone1: "+91 9956499800",
-    phone2: "+91 9807850733",
+    address: "123 / 941, FAZALGANJ INDUSTRIAL AREA, KANPUR -208012",
+    phone1: "9005819628",
+    phone2: "9956499800",
   })
   const [searchQ, setSearchQ] = useState("")
   const [searchOpen, setSearchOpen] = useState(false)

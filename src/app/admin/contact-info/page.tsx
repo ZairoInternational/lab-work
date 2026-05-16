@@ -2,17 +2,21 @@
 
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import { DEFAULT_CONTACT_INFO, type SiteContactInfo } from "@/src/lib/site-contact";
 
-type ContactInfo = {
-  address: string;
-  phone1: string;
-  phone2: string;
+const emptyForm: SiteContactInfo = {
+  address: "",
+  phone1: "",
+  phone2: "",
+  email1: "",
+  email2: "",
+  email3: "",
 };
 
 export default function AdminContactInfoPage() {
   const token = useMemo(() => (typeof window !== "undefined" ? localStorage.getItem("admin_token") : null), []);
 
-  const [form, setForm] = useState<ContactInfo>({ address: "", phone1: "", phone2: "" });
+  const [form, setForm] = useState<SiteContactInfo>(emptyForm);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>("");
@@ -31,7 +35,7 @@ export default function AdminContactInfoPage() {
         const res = await axios.get("/api/admin/contact-info", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setForm(res.data?.data ?? { address: "", phone1: "", phone2: "" });
+        setForm(res.data?.data ?? emptyForm);
       } catch (e) {
         setError("Failed to load contact info.");
       } finally {
@@ -41,7 +45,7 @@ export default function AdminContactInfoPage() {
     load();
   }, [token]);
 
-  const onChange = (key: keyof ContactInfo, value: string) => {
+  const onChange = (key: keyof SiteContactInfo, value: string) => {
     setForm((p) => ({ ...p, [key]: value }));
     setSuccess("");
   };
@@ -68,7 +72,7 @@ export default function AdminContactInfoPage() {
       <div className="max-w-2xl">
         <h1 className="text-3xl font-bold text-gray-900">Contact Info</h1>
         <p className="text-gray-600 mt-2">
-          Update the address and phone numbers shown in the website top bar.
+          Update the address, phone numbers, and emails shown in the site header and contact page.
         </p>
 
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 mt-6 space-y-5">
@@ -85,7 +89,7 @@ export default function AdminContactInfoPage() {
                   value={form.address}
                   onChange={(e) => onChange("address", e.target.value)}
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                  placeholder="Enter address"
+                  placeholder={DEFAULT_CONTACT_INFO.address}
                 />
               </div>
 
@@ -96,7 +100,7 @@ export default function AdminContactInfoPage() {
                     value={form.phone1}
                     onChange={(e) => onChange("phone1", e.target.value)}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                    placeholder="+91 …"
+                    placeholder={DEFAULT_CONTACT_INFO.phone1}
                   />
                 </div>
                 <div>
@@ -105,7 +109,40 @@ export default function AdminContactInfoPage() {
                     value={form.phone2}
                     onChange={(e) => onChange("phone2", e.target.value)}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                    placeholder="+91 …"
+                    placeholder={DEFAULT_CONTACT_INFO.phone2}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-800 mb-1">Email 1</label>
+                  <input
+                    type="email"
+                    value={form.email1}
+                    onChange={(e) => onChange("email1", e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                    placeholder={DEFAULT_CONTACT_INFO.email1}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-800 mb-1">Email 2</label>
+                  <input
+                    type="email"
+                    value={form.email2}
+                    onChange={(e) => onChange("email2", e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                    placeholder={DEFAULT_CONTACT_INFO.email2}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-800 mb-1">Email 3</label>
+                  <input
+                    type="email"
+                    value={form.email3}
+                    onChange={(e) => onChange("email3", e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                    placeholder={DEFAULT_CONTACT_INFO.email3}
                   />
                 </div>
               </div>
@@ -126,4 +163,3 @@ export default function AdminContactInfoPage() {
     </div>
   );
 }
-

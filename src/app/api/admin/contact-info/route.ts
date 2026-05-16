@@ -2,12 +2,9 @@ import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { connectDB } from "@/src/lib/db";
 import ContactInfo from "@/src/models/contactInfo";
+import { withContactDefaults, type SiteContactInfo } from "@/src/lib/site-contact";
 
-type ContactInfoLean = {
-  address?: string;
-  phone1?: string;
-  phone2?: string;
-};
+type ContactInfoLean = Partial<SiteContactInfo>;
 
 function requireAdmin(req: Request) {
   const auth = req.headers.get("authorization") || "";
@@ -22,6 +19,20 @@ function requireAdmin(req: Request) {
   }
 }
 
+function pickFields(body: Record<string, unknown>): SiteContactInfo {
+  const str = (key: keyof SiteContactInfo) =>
+    typeof body[key] === "string" ? String(body[key]).trim() : "";
+
+  return {
+    address: str("address"),
+    phone1: str("phone1"),
+    phone2: str("phone2"),
+    email1: str("email1"),
+    email2: str("email2"),
+    email3: str("email3"),
+  };
+}
+
 export async function GET(req: Request) {
   const auth = requireAdmin(req);
   if (!auth.ok) return NextResponse.json({ success: false, message: auth.message }, { status: auth.status });
@@ -30,11 +41,7 @@ export async function GET(req: Request) {
   const doc = (await ContactInfo.findOne().sort({ updatedAt: -1 }).lean()) as ContactInfoLean | null;
   return NextResponse.json({
     success: true,
-    data: {
-      address: doc?.address ?? "",
-      phone1: doc?.phone1 ?? "",
-      phone2: doc?.phone2 ?? "",
-    },
+    data: withContactDefaults(doc),
   });
 }
 
@@ -43,21 +50,21 @@ export async function PUT(req: Request) {
   if (!auth.ok) return NextResponse.json({ success: false, message: auth.message }, { status: auth.status });
 
   const body = await req.json().catch(() => ({}));
-  const address = typeof body.address === "string" ? body.address.trim() : "";
-  const phone1 = typeof body.phone1 === "string" ? body.phone1.trim() : "";
-  const phone2 = typeof body.phone2 === "string" ? body.phone2.trim() : "";
+  const fields = pickFields(body as Record<string, unknown>);
 
   await connectDB();
   const doc = await ContactInfo.findOne().sort({ updatedAt: -1 });
   if (doc) {
-    doc.address = address;
-    doc.phone1 = phone1;
-    doc.phone2 = phone2;
+    doc.address = fields.address;
+    doc.phone1 = fields.phone1;
+    doc.phone2 = fields.phone2;
+    doc.email1 = fields.email1;
+    doc.email2 = fields.email2;
+    doc.email3 = fields.email3;
     await doc.save();
   } else {
-    await ContactInfo.create({ address, phone1, phone2 });
+    await ContactInfo.create(fields);
   }
 
   return NextResponse.json({ success: true });
 }
-
