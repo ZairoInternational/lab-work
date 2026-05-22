@@ -16,6 +16,7 @@ import axios from "axios";
 import CheckoutButton from "@/src/components/whatsappMessage";
 import {
   defaultSpecTableMeta,
+  getSpecBulletItems,
   getSpecTableTheme,
   parseSpecTableBundle,
 } from "@/src/lib/specTable";
@@ -137,6 +138,16 @@ export default function ProductPage({ params }: Props) {
         : { rows: null as string[][] | null, meta: defaultSpecTableMeta() },
     [product]
   );
+
+  const specBulletItems = useMemo(
+    () => getSpecBulletItems(specTableBundle.meta),
+    [specTableBundle.meta]
+  );
+
+  const productDescription = product?.description?.trim() ?? "";
+  const hasProductDescription = Boolean(productDescription);
+  const hasSpecPoints = specBulletItems.length > 0;
+  const showAboutSection = hasProductDescription || hasSpecPoints;
 
   if (loading) {
     return (
@@ -373,8 +384,8 @@ export default function ProductPage({ params }: Props) {
           </div>
         </section>
 
-        {/* Long description */}
-        {product.description ? (
+        {/* Long description, then spec pointers directly below when both exist */}
+        {showAboutSection ? (
           <section className="border-b border-slate-200/70 bg-white py-16 sm:py-20 lg:py-24">
             <div className="mx-auto max-w-[880px] px-4 sm:px-6 lg:px-8">
               <div className="mb-10 flex items-start gap-4">
@@ -388,10 +399,42 @@ export default function ProductPage({ params }: Props) {
                   </h2>
                 </div>
               </div>
-              <div className="prose prose-slate prose-lg max-w-none prose-p:leading-relaxed prose-p:text-slate-700">
-                <p className="whitespace-pre-line text-base leading-relaxed text-slate-700 sm:text-lg">
-                  {product.description}
-                </p>
+              <div className="max-w-none">
+                {hasProductDescription ? (
+                  <div className="prose prose-slate prose-lg prose-p:leading-relaxed prose-p:text-slate-700">
+                    <p className="whitespace-pre-line text-base leading-relaxed text-slate-700 sm:text-lg">
+                      {productDescription}
+                    </p>
+                  </div>
+                ) : null}
+                {hasSpecPoints ? (
+                  <ul
+                    className={
+                      hasProductDescription
+                        ? "mt-8 list-disc space-y-2.5 border-t border-slate-200 pt-8 pl-5 text-base leading-relaxed text-slate-700 sm:text-lg"
+                        : "list-disc space-y-2.5 pl-5 text-base leading-relaxed text-slate-700 sm:text-lg"
+                    }
+                  >
+                    {specBulletItems.map((it, i) => {
+                      const h = it.heading.trim();
+                      const c = it.content.trim();
+                      const boldH = it.headingBold !== false;
+                      return (
+                        <li key={i}>
+                          {h ? (
+                            <>
+                              <span className={boldH ? "font-semibold text-slate-900" : ""}>
+                                {h}
+                              </span>
+                              {c ? <span aria-hidden>: </span> : null}
+                            </>
+                          ) : null}
+                          {c ? <span>{c}</span> : null}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : null}
               </div>
             </div>
           </section>
@@ -402,9 +445,6 @@ export default function ProductPage({ params }: Props) {
           ? (() => {
               const theme = getSpecTableTheme(specTableBundle.meta.themeId);
               const meta = specTableBundle.meta;
-              const bulletItems = (meta.moreInfoItems ?? []).filter(
-                (it) => it.heading.trim() || it.content.trim()
-              );
 
               const cellFw = (ri: number, ci: number) => {
                 if (
@@ -472,42 +512,6 @@ export default function ProductPage({ params }: Props) {
                           })}
                         </tbody>
                       </table>
-
-                      {bulletItems.length > 0 ? (
-                        <div
-                          className="border-t px-3 py-2.5 sm:px-4 sm:py-3"
-                          style={{
-                            borderColor: theme.border,
-                            background: theme.cellBg,
-                            color: theme.cellText,
-                          }}
-                        >
-                          <ul className="m-0 list-disc space-y-1.5 pl-5 text-sm leading-relaxed sm:text-base">
-                            {bulletItems.map((it, i) => {
-                              const h = it.heading.trim();
-                              const c = it.content.trim();
-                              const boldH = it.headingBold !== false;
-                              return (
-                                <li key={i} className="marker:text-current">
-                                  {h ? (
-                                    <>
-                                      <span
-                                        style={{
-                                          fontWeight: boldH ? 700 : 400,
-                                        }}
-                                      >
-                                        {h}
-                                      </span>
-                                      {c ? <span aria-hidden>: </span> : null}
-                                    </>
-                                  ) : null}
-                                  {c ? <span>{c}</span> : null}
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        </div>
-                      ) : null}
                     </div>
                   </div>
                 </section>

@@ -182,6 +182,31 @@ export function defaultSpecTableMeta(): SpecTableMeta {
   };
 }
 
+/** Non-empty bullet rows configured under the spec table editor. */
+export function getSpecBulletItems(meta: SpecTableMeta): SpecMoreInfoItem[] {
+  return (meta.moreInfoItems ?? []).filter(
+    (it) => it.heading.trim() || it.content.trim()
+  );
+}
+
+export function hasSpecBulletItems(meta: SpecTableMeta): boolean {
+  return getSpecBulletItems(meta).length > 0;
+}
+
+/** Persist spec table and/or bullet rows (bullets can exist without a table). */
+export function buildProductSpecsPayload(
+  specTable: string[][] | null,
+  specTableMeta: SpecTableMeta
+): { specTable?: string[][]; specTableMeta: SpecTableMeta } | Record<string, never> {
+  const hasTable = Boolean(specTable?.length);
+  const hasBullets = hasSpecBulletItems(specTableMeta);
+  if (!hasTable && !hasBullets) return {};
+  return {
+    ...(hasTable ? { specTable: specTable! } : {}),
+    specTableMeta,
+  };
+}
+
 export function emptySpecGrid(rows: number, cols: number): string[][] {
   const { rows: r, cols: c } = clampSpecTableSize(rows, cols);
   return Array.from({ length: r }, () =>

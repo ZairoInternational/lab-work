@@ -9,6 +9,12 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const categorySlug = searchParams.get("category");
     const featuredOnly = searchParams.get("featured") === "true";
+    const countOnly = searchParams.get("count") === "true";
+
+    if (countOnly) {
+      const count = await Product.countDocuments();
+      return NextResponse.json({ count });
+    }
 
     if (featuredOnly) {
       const products = await Product.find({ featured: true })

@@ -35,6 +35,7 @@ import {
   useSpring,
   useTransform,
 } from "framer-motion";
+import axios from "axios";
 import { useSiteClients } from "@/src/hooks/use-site-clients";
 
 type Stat = { label: string; value: number; suffix?: string };
@@ -398,6 +399,24 @@ export default function AboutUsPage() {
   const reduceMotion = useReducedMotion();
   const siteClients = useSiteClients();
   const [expandedService, setExpandedService] = useState<string | null>(null);
+  const [productCount, setProductCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    axios
+      .get<{ count: number }>("/api/products", { params: { count: "true" } })
+      .then((res) => {
+        if (!cancelled && typeof res.data?.count === "number") {
+          setProductCount(res.data.count);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setProductCount(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Mouse-follow lighting for hero
   const mx = useMotionValue(0);
@@ -418,12 +437,15 @@ export default function AboutUsPage() {
 
   const stats: Stat[] = useMemo(
     () => [
-      { label: "Years of excellence", value: 10, suffix: "+" },
+      { label: "Years of excellence", value: 14, suffix: "+" },
       { label: "ISO-grade process", value: 2, suffix: " certs" },
       { label: "Client trust", value: 120, suffix: "+" },
-      { label: "Product iterations", value: 480, suffix: "+" },
+      {
+        label: "Products in catalog",
+        value: productCount ?? 0,
+      },
     ],
-    []
+    [productCount]
   );
 
   const journey = useMemo(
@@ -497,9 +519,11 @@ export default function AboutUsPage() {
                 <GradientHeading>Crafting precision equipment for the people who move science forward.</GradientHeading>
               </h1>
               <p className="mt-7 text-lg sm:text-xl text-slate-700 leading-relaxed max-w-2xl [text-wrap:balance]">
-                ISO-certified laboratory equipment manufacturing with over 10 years of excellence—head office in Kanpur,
-                serving laboratories worldwide with analytical instruments, equipment, and specialized tools for research,
-                medical, and education. Manufacturing in state-of-the-art facilities in Kanpur and Ghaziabad.
+                For more than 14 years, Benchtop has built ISO-certified laboratory equipment from our home base in
+                Kanpur. We supply research, medical, and education labs across India and overseas with analytical
+                instruments, benchtop systems, and the specialized tools teams rely on every day. Our manufacturing
+                runs through modern facilities in Kanpur and Ghaziabad, with the same care on every order whether you
+                need a single unit or a full lab fit-out.
               </p>
 
               <div className="mt-10 flex flex-wrap gap-4">
@@ -619,10 +643,14 @@ export default function AboutUsPage() {
                   <GradientHeading>Engineering that feels effortless.</GradientHeading>
                 </h2>
               </div>
-              <div
-                aria-hidden="true"
-                className="hidden lg:block flex-1 min-h-[140px] rounded-[32px] border border-blue-400/20 bg-gradient-to-br from-blue-500/12 via-white/40 to-transparent shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]"
-              />
+              <div className="flex-1 min-h-[200px] overflow-hidden rounded-[32px] border border-blue-400/20 bg-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] ring-1 ring-slate-900/5">
+                <img
+                  src="/assets/lab work.png"
+                  alt="Engineers assembling laboratory equipment"
+                  className="h-full w-full min-h-[200px] object-cover"
+                  loading="lazy"
+                />
+              </div>
             </div>
             <div className="lg:col-span-7">
               <div

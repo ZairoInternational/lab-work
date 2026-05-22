@@ -7,6 +7,7 @@ import { AdminProductDescriptionMediaPreview } from "@/src/components/admin-prod
 import { descriptionMediaUploadEndpoint } from "@/src/lib/mediaUrl";
 import { AdminSpecTableEditor } from "@/src/components/admin-spec-table-editor";
 import {
+  buildProductSpecsPayload,
   defaultSpecTableMeta,
   type SpecTableMeta,
 } from "@/src/lib/specTable";
@@ -95,9 +96,10 @@ export default function NewProduct() {
         ...form,
         images: form.images ? form.images : "",
         pdf: form.pdf ? form.pdf : "",
-        ...(specTable && specTable.length > 0
-          ? { specs: { specTable, specTableMeta } }
-          : {}),
+        ...(() => {
+          const specs = buildProductSpecsPayload(specTable, specTableMeta);
+          return Object.keys(specs).length > 0 ? { specs } : {};
+        })(),
       };
 
       await axios.post("/api/products", payload);

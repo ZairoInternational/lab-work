@@ -47,7 +47,7 @@ type LeadForm = {
   note: string;
 };
 
-const WHATSAPP_E164 = "919956499800";
+import { WHATSAPP_E164 } from "@/src/lib/whatsapp";
 
 function productPageUrl(product: Product): string {
   const catSlug =

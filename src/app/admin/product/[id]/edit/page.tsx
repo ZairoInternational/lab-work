@@ -20,6 +20,7 @@ import { AdminProductDescriptionMediaPreview } from "@/src/components/admin-prod
 import { descriptionMediaUploadEndpoint } from "@/src/lib/mediaUrl";
 import { AdminSpecTableEditor } from "@/src/components/admin-spec-table-editor";
 import {
+  buildProductSpecsPayload,
   parseSpecTableBundle,
   defaultSpecTableMeta,
   type SpecTableMeta,
@@ -211,8 +212,7 @@ export default function EditProduct() {
         images: form.images ? form.images : "",
         pdf: form.pdf ? form.pdf : "",
         featured: Boolean(form.featured),
-        specs:
-          specTable && specTable.length > 0 ? { specTable, specTableMeta } : {},
+        specs: buildProductSpecsPayload(specTable, specTableMeta),
       };
       await axios.put(`/api/products/${id}`, payload);
       router.push("/admin/product");
