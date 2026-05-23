@@ -119,10 +119,10 @@ export default function Footer() {
         <div className="grid gap-8 lg:grid-cols-4">
           <div>
             <Link href="/">
-              <img src="/assets/benchtop_logo_big.png" alt="Benchtop Equipment" className="mb-6 h-12" />
+              <img src="/assets/abc.png" alt="Benchtop Equipment" className="mb-6 h-20 w-auto"  />
             </Link>
             <p className="mb-6 leading-relaxed text-gray-400">
-              Benchtop laboratory equipment designed for real lab work—quality verification, efficient operation,
+              Benchtop laboratory equipment designed for real lab work quality verification, efficient operation,
               and responsive support from enquiry to delivery.
             </p>
             {hasAnySocial ? (
