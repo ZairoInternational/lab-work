@@ -257,7 +257,7 @@ const ABOUT_SERVICES = [
 const ABOUT_SPECIALTIES = [
   "Laboratory Equipment consultation",
   "Design, development, and distribution",
-  "Direct import of equipment and spare parts",
+  "Direct import and export of equipments and spare parts",
   "Upgrade and special modifications in products of any brand",
   "Designs that make sense",
   "In-house CAD team",
@@ -400,6 +400,7 @@ export default function AboutUsPage() {
   const siteClients = useSiteClients();
   const [expandedService, setExpandedService] = useState<string | null>(null);
   const [productCount, setProductCount] = useState<number | null>(null);
+  const [certificateCount, setCertificateCount] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -412,6 +413,23 @@ export default function AboutUsPage() {
       })
       .catch(() => {
         if (!cancelled) setProductCount(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    axios
+      .get<Array<{ _id: string }>>("/api/certificates")
+      .then((res) => {
+        if (!cancelled) {
+          setCertificateCount(Array.isArray(res.data) ? res.data.length : 0);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setCertificateCount(null);
       });
     return () => {
       cancelled = true;
@@ -437,15 +455,15 @@ export default function AboutUsPage() {
 
   const stats: Stat[] = useMemo(
     () => [
-      { label: "Years of excellence", value: 14, suffix: "+" },
-      { label: "ISO-grade process", value: 2, suffix: " certs" },
+      { label: "Years of excellence", value: 10, suffix: "+" },
+      { label: "ISO-grade process", value: certificateCount ?? 0, suffix: " certs" },
       { label: "Client trust", value: 120, suffix: "+" },
       {
         label: "Products in catalog",
         value: productCount ?? 0,
       },
     ],
-    [productCount]
+    [certificateCount, productCount]
   );
 
   const journey = useMemo(
@@ -519,7 +537,7 @@ export default function AboutUsPage() {
                 <GradientHeading>Crafting precision equipment for the people who move science forward.</GradientHeading>
               </h1>
               <p className="mt-7 text-lg sm:text-xl text-slate-700 leading-relaxed max-w-2xl [text-wrap:balance]">
-                For more than 14 years, Benchtop has built ISO-certified laboratory equipment from our home base in
+                For more than 10 years, Benchtop has built ISO-certified laboratory equipment from our home base in
                 Kanpur. We supply research, medical, and education labs across India and overseas with analytical
                 instruments, benchtop systems, and the specialized tools teams rely on every day. Our manufacturing
                 runs through modern facilities in Kanpur and Ghaziabad, with the same care on every order whether you
