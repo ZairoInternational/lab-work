@@ -98,7 +98,7 @@ export default function ProductPage({ params }: Props) {
         setError(null);
 
         const res = await axios.get<Product>(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/api/particularProduct/${productSlug}`,
+          `/api/particularProduct/${encodeURIComponent(productSlug)}`,
           { validateStatus: () => true }
         );
 
